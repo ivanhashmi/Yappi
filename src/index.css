@@ -1,0 +1,138 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ── Apple Design: Base Typography & System Font ── */
+html {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html.dark {
+  color-scheme: dark;
+  background-color: #000000;
+}
+
+/* ── Mobile-first layout & safe-areas ── */
+body {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.pb-safe-bottom {
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+.bottom-bar-safe {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0.5rem));
+}
+
+/* ── Apple Design: Typography tracking (§15) ── */
+.tracking-display { letter-spacing: -0.03em; }
+.tracking-title  { letter-spacing: -0.02em; }
+.tracking-body   { letter-spacing: -0.01em; }
+
+/* ── Apple Design: Response – press feedback on pointer-down (§1) ── */
+.press-scale {
+  transition: transform 120ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 120ms ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.press-scale:active {
+  transform: scale(0.96);
+  opacity: 0.88;
+}
+
+/* ── Apple Design: Materials – frosted glass & AMOLED pure-black layers ── */
+.material-thick {
+  background: rgba(245, 245, 247, 0.85);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+}
+.dark .material-thick {
+  background: rgba(0, 0, 0, 0.86);
+}
+
+.material-card {
+  background: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+.dark .material-card {
+  background: #0D0D10;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.material-bottom-bar {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+.dark .material-bottom-bar {
+  background: rgba(0, 0, 0, 0.9);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ── Apple Design: Flashcard 3D flip with spring-like cubic-bezier (§4) ── */
+@layer utilities {
+  .card-flip-transition {
+    transition: transform 0.52s cubic-bezier(0.22, 1, 0.36, 1);
+    transform-style: preserve-3d;
+  }
+  .backface-hidden {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+}
+
+/* ── Hide scrollbar for clean horizontal carousels ── */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ── Apple Design: Reduced motion accessibility (§14) ── */
+@media (prefers-reduced-motion: reduce) {
+  .press-scale:active {
+    transform: none;
+  }
+  .card-flip-transition {
+    transition: opacity 200ms ease !important;
+    transform: none !important;
+  }
+  * {
+    transition-duration: 0.15s !important;
+    animation-duration: 0.15s !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .material-thick,
+  .material-bottom-bar {
+    background: #F5F5F7 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  .dark .material-thick,
+  .dark .material-bottom-bar {
+    background: #000000 !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .material-card {
+    border: 1.5px solid #1D1D1F !important;
+  }
+  .dark .material-card {
+    border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
+  }
+}
