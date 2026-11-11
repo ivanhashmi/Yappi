@@ -476,33 +476,34 @@ export default function App() {
     <div className="w-full min-h-screen bg-[#F5F5F7] dark:bg-black text-[#1D1D1F] dark:text-[#F5F5F7] flex flex-col items-center">
       {/* Phone App Wrapper: mobile-first max-w-md on desktop, 100% on phone */}
       <div className="w-full max-w-md min-h-screen bg-[#F5F5F7] dark:bg-black flex flex-col relative md:shadow-2xl md:border-x md:border-black/[0.06] dark:md:border-white/[0.08]">
-        {/* Duolingo + iOS-Style Clean Top Navigation Bar */}
+        {/* Yappi Top Navigation Bar */}
         <header className="sticky top-0 z-30 material-thick border-b border-black/[0.06] dark:border-white/[0.08] px-4 py-2.5">
           <div className="flex items-center justify-between gap-2">
-            {/* Duolingo-Style Active Course Pill */}
-            <button
-              type="button"
-              onClick={() => setShowSettings(true)}
-              className="press-scale flex items-center gap-2 p-1 pl-1.5 pr-2.5 rounded-2xl bg-white dark:bg-[#0D0D10] border border-black/[0.08] dark:border-white/[0.10] shadow-xs cursor-pointer hover:border-[#58CC02]/40 transition-all text-left min-w-0"
-              title="Course Settings"
-            >
-              <div className="w-8 h-8 rounded-xl bg-[#F5F5F7] dark:bg-[#16161A] flex items-center justify-center text-xl shadow-xs shrink-0">
-                {currentLangConfig.flag}
+            {/* Yappi Brand Wordmark */}
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#007AFF] to-[#5856D6] dark:from-[#0A84FF] dark:to-[#5E5CE6] text-white flex items-center justify-center text-sm font-black shadow-xs shrink-0">
+                Y
               </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-1">
-                  <span className="text-xs font-black tracking-tight leading-none text-[#1D1D1F] dark:text-[#F5F5F7] truncate">
-                    {currentLangConfig.name}
-                  </span>
-                  <Icon name="chevron-down" className="w-2.5 h-2.5 text-[#86868B] dark:text-[#A1A1A6] shrink-0" />
-                </div>
-                <p className="text-[10px] text-[#86868B] dark:text-[#A1A1A6] font-semibold leading-none mt-1 truncate">
-                  {currentLangConfig.subtitle}
-                </p>
-              </div>
-            </button>
+              <span className="text-base font-black tracking-tight text-[#1D1D1F] dark:text-[#F5F5F7]">
+                Yappi
+              </span>
+            </div>
 
             <div className="flex items-center gap-1.5 shrink-0">
+              {/* Compact Active Course Pill */}
+              <button
+                type="button"
+                onClick={() => setShowSettings(true)}
+                className="press-scale flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl bg-white dark:bg-[#0D0D10] border border-black/[0.08] dark:border-white/[0.10] shadow-xs cursor-pointer hover:border-[#58CC02]/40 transition-all"
+                title="Switch Language & Course Settings"
+              >
+                <span className="text-base leading-none">{currentLangConfig.flag}</span>
+                <span className="text-xs font-bold text-[#1D1D1F] dark:text-[#F5F5F7]">
+                  {currentLangConfig.name}
+                </span>
+                <Icon name="chevron-down" className="w-3 h-3 text-[#86868B] dark:text-[#A1A1A6]" />
+              </button>
+
               {/* Stop audio button if speaking */}
               {isSpeaking && (
                 <button
