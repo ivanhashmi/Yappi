@@ -42,10 +42,51 @@ export function pcmToWavDataUri(base64Pcm, sampleRate = 24000, numChannels = 1) 
   return `data:audio/wav;base64,${btoa(binary)}`;
 }
 
-export async function fetchGeminiSpeechAudio(text, voiceName = "Kore", apiKey) {
-  const cleanApiKey = (apiKey || import.meta.env.VITE_GEMINI_API_KEY || "").replace(/['"\s]/g, "");
-  if (!cleanApiKey) throw new Error("No API key available for Gemini TTS");
+export async function checkServerGeminiStatus() {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+    const response = await fetch("/api/gemini", {
+      method: "GET",
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    if (!response.ok) return { reachable: false, configured: false };
+    const data = await response.json();
+    return { reachable: true, configured: Boolean(data?.configured) };
+  } catch {
+    return { reachable: false, configured: false };
+  }
+}
 
+async function postGeminiProxy(model, payload, timeoutMs = 12000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch("/api/gemini", {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ model, payload }),
+    });
+
+    if (!response.ok) {
+      const bodyText = await response.text().catch(() => "");
+      const err = new Error(`Gemini API (${response.status}): ${bodyText.slice(0, 160) || response.statusText}`);
+      err.status = response.status;
+      if (response.status === 503) err.code = "NO_API_KEY";
+      throw err;
+    }
+
+    return await response.json();
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+export async function fetchGeminiSpeechAudio(text, voiceName = "Kore") {
   const cacheKey = `${voiceName}::${text.trim().toLowerCase()}`;
   if (ttsAudioCache.has(cacheKey)) {
     return ttsAudioCache.get(cacheKey);
@@ -61,17 +102,9 @@ export async function fetchGeminiSpeechAudio(text, voiceName = "Kore", apiKey) {
   let lastError = null;
   for (const model of ttsModels) {
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(cleanApiKey)}`;
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 7500);
-
-      const response = await fetch(url, {
-        method: "POST",
-        signal: controller.signal,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const data = await postGeminiProxy(
+        model,
+        {
           contents: [{ parts: [{ text }] }],
           generationConfig: {
             responseModalities: ["AUDIO"],
@@ -83,17 +116,10 @@ export async function fetchGeminiSpeechAudio(text, voiceName = "Kore", apiKey) {
               },
             },
           },
-        }),
-      });
+        },
+        12000
+      );
 
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errText = await response.text().catch(() => "");
-        throw new Error(`TTS HTTP ${response.status}: ${errText.slice(0, 100)}`);
-      }
-
-      const data = await response.json();
       const inlineData = data.candidates?.[0]?.content?.parts?.[0]?.inlineData;
       const base64Audio = inlineData?.data;
       if (!base64Audio) throw new Error("No inline audio data returned");
@@ -116,6 +142,7 @@ export async function fetchGeminiSpeechAudio(text, voiceName = "Kore", apiKey) {
       return dataUri;
     } catch (err) {
       lastError = err;
+      if (err.code === "NO_API_KEY") throw err;
       console.warn(`Gemini TTS model ${model} failed, trying next:`, err);
     }
   }
@@ -124,15 +151,6 @@ export async function fetchGeminiSpeechAudio(text, voiceName = "Kore", apiKey) {
 }
 
 export async function callAI({ settings, system, messages, maxTokens = 900 }) {
-  const envKey = (import.meta.env.VITE_GEMINI_API_KEY || "").replace(/['"\s]/g, "");
-  const apiKey = envKey || (settings?.apiKey || "").replace(/['"\s]/g, "");
-
-  if (!apiKey) {
-    const err = new Error("NO_API_KEY");
-    err.code = "NO_API_KEY";
-    throw err;
-  }
-
   const requestedModel = settings?.model && settings.model.startsWith("gemini") ? settings.model : "gemini-3.5-flash-lite";
 
   let lastError = null;
@@ -147,53 +165,34 @@ export async function callAI({ settings, system, messages, maxTokens = 900 }) {
     "gemini-3.8-flash",
   ].filter((m, i, arr) => arr.indexOf(m) === i);
 
+  const contents = messages.map((m) => ({
+    role: m.role === "assistant" ? "model" : "user",
+    parts: [{ text: m.content }],
+  }));
+
   for (const model of candidateModels) {
-    const endpoints = [
-      `/api/gemini/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`,
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`,
-    ];
-
-    for (const url of endpoints) {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 7500);
-
-        const contents = messages.map((m) => ({
-          role: m.role === "assistant" ? "model" : "user",
-          parts: [{ text: m.content }],
-        }));
-
-        const response = await fetch(url, {
-          method: "POST",
-          signal: controller.signal,
-          headers: {
-            "Content-Type": "application/json",
+    try {
+      const data = await postGeminiProxy(
+        model,
+        {
+          system_instruction: {
+            parts: [{ text: system }],
           },
-          body: JSON.stringify({
-            system_instruction: {
-              parts: [{ text: system }],
-            },
-            contents,
-            generationConfig: {
-              temperature: 0.6,
-              maxOutputTokens: maxTokens,
-            },
-          }),
-        });
+          contents,
+          generationConfig: {
+            temperature: 0.6,
+            maxOutputTokens: maxTokens,
+          },
+        },
+        12000
+      );
 
-        clearTimeout(timeoutId);
-
-        if (response.ok) {
-          const data = await response.json();
-          const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (candidateText) return candidateText;
-        } else {
-          const bodyText = await response.text().catch(() => "");
-          lastError = new Error(`Gemini API (${response.status}): ${bodyText.slice(0, 160) || response.statusText}`);
-        }
-      } catch (err) {
-        if (!lastError) lastError = err;
-      }
+      const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (candidateText) return candidateText;
+      lastError = new Error(`Gemini API returned empty content for ${model}`);
+    } catch (err) {
+      lastError = err;
+      if (err.code === "NO_API_KEY") throw err;
     }
   }
 

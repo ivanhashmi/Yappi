@@ -187,13 +187,13 @@ Respond ONLY with raw JSON:
 
           {!apiConnected && (
             <div className="p-2 rounded-xl bg-[#FF9500]/10 border border-[#FF9500]/20 text-[11px] text-[#FF9500]">
-              ⚡ No API key added. AI deck will use built-in template words.{" "}
+              ⚡ Server AI offline. AI deck will use built-in template words.{" "}
               <button
                 type="button"
                 onClick={onOpenSettings}
                 className="font-bold underline cursor-pointer"
               >
-                Add Key
+                Settings
               </button>
             </div>
           )}

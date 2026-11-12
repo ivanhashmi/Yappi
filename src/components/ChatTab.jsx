@@ -297,7 +297,7 @@ Respond ONLY with raw JSON (no markdown):
             <span className="text-[#FF9500] font-semibold">
               ⚡ Practice Mode (Pre-set responses)
             </span>
-            <span className="text-[11px] font-bold text-[#007AFF] dark:text-[#0A84FF]">Add API Key →</span>
+            <span className="text-[11px] font-bold text-[#007AFF] dark:text-[#0A84FF]">Status →</span>
           </div>
         )}
 

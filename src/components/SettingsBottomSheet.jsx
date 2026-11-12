@@ -9,6 +9,7 @@ export default function SettingsBottomSheet({
   onChangeLanguage,
   onChangeTheme,
   settings,
+  apiConnected = true,
   voices,
   authUser,
   syncStatus,
@@ -202,21 +203,43 @@ export default function SettingsBottomSheet({
             </div>
           </div>
 
-          {/* AI Status Card (Loaded from .env) */}
-          <div className="flex items-center justify-between p-3 rounded-2xl bg-[#34C759]/10 dark:bg-[#34C759]/15 border border-[#34C759]/20">
+          {/* AI Status Card (Server-side proxy) */}
+          <div
+            className={`flex items-center justify-between p-3 rounded-2xl border ${
+              apiConnected
+                ? "bg-[#34C759]/10 dark:bg-[#34C759]/15 border-[#34C759]/20"
+                : "bg-[#FF9500]/10 dark:bg-[#FF9500]/15 border-[#FF9500]/25"
+            }`}
+          >
             <div className="flex items-center gap-2.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#34C759] shadow-[0_0_8px_#34C759]" />
+              <span
+                className={`w-2.5 h-2.5 rounded-full ${
+                  apiConnected
+                    ? "bg-[#34C759] shadow-[0_0_8px_#34C759]"
+                    : "bg-[#FF9500] shadow-[0_0_8px_#FF9500]"
+                }`}
+              />
               <div>
                 <div className="text-xs font-bold text-[#1D1D1F] dark:text-[#F5F5F7]">
-                  Google Gemini AI Active
+                  {apiConnected ? "Google Gemini AI Active" : "Gemini AI Unavailable"}
                 </div>
-                <div className="text-[11px] text-[#34C759] font-semibold">
-                  Loaded securely from environment (.env)
+                <div
+                  className={`text-[11px] font-semibold ${
+                    apiConnected ? "text-[#34C759]" : "text-[#FF9500]"
+                  }`}
+                >
+                  {apiConnected
+                    ? "Protected via server-side API proxy"
+                    : "Server GEMINI_API_KEY not configured"}
                 </div>
               </div>
             </div>
-            <span className="px-2 py-0.5 rounded-full bg-white dark:bg-black text-[10px] font-bold text-[#34C759] shadow-xs">
-              Connected
+            <span
+              className={`px-2 py-0.5 rounded-full bg-white dark:bg-black text-[10px] font-bold shadow-xs ${
+                apiConnected ? "text-[#34C759]" : "text-[#FF9500]"
+              }`}
+            >
+              {apiConnected ? "Connected" : "Offline"}
             </span>
           </div>
 

@@ -11,7 +11,7 @@ import {
   getLocalDateKey,
   getYesterdayKey,
 } from "./utils/storage";
-import { fetchGeminiSpeechAudio } from "./services/gemini";
+import { fetchGeminiSpeechAudio, checkServerGeminiStatus } from "./services/gemini";
 import { supabase } from "./services/supabase";
 import {
   syncAndMergeOnSignIn,
@@ -48,6 +48,7 @@ export default function App() {
   const [syncStatus, setSyncStatus] = useState("idle");
   const [voices, setVoices] = useState([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [serverApiConfigured, setServerApiConfigured] = useState(true);
   const currentAudioRef = useRef(null);
 
   const appStateRef = useRef(appState);
@@ -169,6 +170,18 @@ export default function App() {
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    checkServerGeminiStatus().then((status) => {
+      if (active) {
+        setServerApiConfigured(Boolean(status?.configured));
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const isHighQualityVoice = useCallback((voice) => {
     if (!voice) return false;
     const name = (voice.name || "").toLowerCase();
@@ -253,13 +266,12 @@ export default function App() {
       stopSpeaking();
 
       const useGemini = !forceDevice && appState.settings.voiceEngine !== "device";
-      const apiKey = (import.meta.env.VITE_GEMINI_API_KEY || appState.settings.apiKey || "").replace(/['"\s]/g, "");
 
-      if (useGemini && apiKey) {
+      if (useGemini && serverApiConfigured) {
         setIsSpeaking(true);
         try {
           const chosenVoice = voiceOverride || appState.settings.geminiVoice || "Kore";
-          const dataUri = await fetchGeminiSpeechAudio(text, chosenVoice, apiKey);
+          const dataUri = await fetchGeminiSpeechAudio(text, chosenVoice);
           const audio = new Audio(dataUri);
           currentAudioRef.current = audio;
           audio.playbackRate = slow ? 0.8 : 1.0;
@@ -283,7 +295,7 @@ export default function App() {
 
       speakWithDevice(text, { slow });
     },
-    [appState.settings.voiceEngine, appState.settings.apiKey, appState.settings.geminiVoice, stopSpeaking, speakWithDevice]
+    [appState.settings.voiceEngine, appState.settings.geminiVoice, serverApiConfigured, stopSpeaking, speakWithDevice]
   );
 
   const runBgSync = useCallback((fn) => {
@@ -458,9 +470,7 @@ export default function App() {
 
   const learnedCount = Object.keys(appState.learnedWords).length;
   const apiConnected = Boolean(
-    import.meta.env.VITE_GEMINI_API_KEY ||
-      (appState.settings.apiKey || "").trim() ||
-      appState.settings.allowProxyWithoutKey
+    serverApiConfigured || appState.settings.allowProxyWithoutKey
   );
 
   const tabs = [
@@ -684,6 +694,7 @@ export default function App() {
             onChangeLanguage={handleLanguageChange}
             onChangeTheme={handleChangeTheme}
             settings={appState.settings}
+            apiConnected={apiConnected}
             voices={voices}
             authUser={authUser}
             syncStatus={syncStatus}
