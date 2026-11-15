@@ -56,6 +56,7 @@ export const LANGUAGES = [
 
 export const GEMINI_MODELS = [
   { id: "gemini-3.5-flash-lite", label: "Gemini 3.5 Flash-Lite (⚡ Fastest · Recommended)" },
+  { id: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash-Lite (High Quota · Low Rate Limits)" },
   { id: "gemini-3.8-flash", label: "Gemini 3.8 Flash (Latest Flagship)" },
   { id: "gemini-3.1-flash-lite", label: "Gemini 3.1 Flash-Lite (Ultra Fast)" },
   { id: "gemini-3.5-flash", label: "Gemini 3.5 Flash (Balanced)" },

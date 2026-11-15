@@ -159,10 +159,12 @@ export async function callAI({ settings, system, messages, maxTokens = 900 }) {
   const candidateModels = [
     requestedModel,
     "gemini-3.5-flash-lite",
+    "gemini-2.5-flash-lite",
     "gemini-3.1-flash-lite",
-    "gemini-3-flash-preview",
+    "gemini-2.5-flash",
     "gemini-3.5-flash",
     "gemini-3.8-flash",
+    "gemini-3-flash-preview",
   ].filter((m, i, arr) => arr.indexOf(m) === i);
 
   const contents = messages.map((m) => ({
