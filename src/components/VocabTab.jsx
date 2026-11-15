@@ -20,8 +20,8 @@ export default function VocabTab({
   onDeleteCustomDeck,
 }) {
   const presetDecks = PRESET_DECKS_DATA[language] || PRESET_DECKS_DATA.es;
-  const langName = language === "fr" ? "French" : "Spanish";
-  const langCodeTitle = language === "fr" ? "Français" : "Español";
+  const langName = language === "fr" ? "French" : language === "it" ? "Italian" : "Spanish";
+  const langCodeTitle = language === "fr" ? "Français" : language === "it" ? "Italiano" : "Español";
 
   // Filter custom decks by language tag if any or keep all
   const filteredCustomDecks = useMemo(() => {
@@ -203,7 +203,13 @@ Respond ONLY with raw JSON:
               type="text"
               value={genTopic}
               onChange={(e) => setGenTopic(e.target.value)}
-              placeholder={language === "fr" ? "e.g. Boulangerie, Métro parisien, Commander au restaurant" : "e.g. Airport, Hotel check-in, Doctor visit, Ordering tapas"}
+              placeholder={
+                language === "fr"
+                  ? "e.g. Boulangerie, Métro parisien, Commander au restaurant"
+                  : language === "it"
+                  ? "e.g. Colosseo, Bar italiano, Ordinare una pizza, In treno"
+                  : "e.g. Airport, Hotel check-in, Doctor visit, Ordering tapas"
+              }
               className="flex-1 px-3 py-2 rounded-xl bg-[#F5F5F7] dark:bg-[#16161A] dark:border dark:border-white/[0.08] text-xs text-[#1D1D1F] dark:text-[#F5F5F7] placeholder-[#86868B] focus:outline-none"
             />
             <button

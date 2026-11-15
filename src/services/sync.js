@@ -6,7 +6,7 @@ function splitScopedKey(scopedKey, fallbackLang = "es") {
   if (idx === -1) return { language: fallbackLang, targetId: scopedKey };
   const lang = scopedKey.slice(0, idx);
   return {
-    language: lang === "fr" ? "fr" : "es",
+    language: lang === "fr" || lang === "it" ? lang : lang === "es" ? "es" : fallbackLang,
     targetId: scopedKey.slice(idx + 1),
   };
 }
@@ -347,7 +347,7 @@ async function pushMergedAdditionsToCloud(
     .map((d) => ({
       user_id: userId,
       client_deck_id: d.id,
-      language: d.language === "fr" ? "fr" : "es",
+      language: d.language === "fr" || d.language === "it" ? d.language : "es",
       title: d.title,
       spanish_title: d.spanishTitle || "",
       cards: d.cards || [],
@@ -510,7 +510,7 @@ export async function syncCustomDeck(userId, deck, removed = false) {
     {
       user_id: userId,
       client_deck_id: deck.id,
-      language: deck.language === "fr" ? "fr" : "es",
+      language: deck.language === "fr" || deck.language === "it" ? deck.language : "es",
       title: deck.title,
       spanish_title: deck.spanishTitle || "",
       cards: deck.cards || [],

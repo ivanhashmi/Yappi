@@ -21,7 +21,12 @@ export default function AlphabetTab({ language = "es", speakSpanish, recordPract
     speakSpanish(`${item.tts}. ${item.word}`);
   };
 
-  const langName = language === "fr" ? "French (Français)" : "Spanish (Español)";
+  const langName =
+    language === "fr"
+      ? "French (Français)"
+      : language === "it"
+      ? "Italian (Italiano)"
+      : "Spanish (Español)";
   const letterCount = alphabet.length;
 
   return (

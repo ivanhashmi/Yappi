@@ -20,7 +20,7 @@ export default function TranslateTab({
   const [result, setResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const langName = language === "fr" ? "French" : "Spanish";
+  const langName = language === "fr" ? "French" : language === "it" ? "Italian" : "Spanish";
 
   const runTranslate = async (overrideText) => {
     const query = (overrideText !== undefined ? overrideText : input).trim();
@@ -83,6 +83,13 @@ Respond ONLY with raw JSON:
           "A table for two, please",
           "Combien coûte ce café au lait ?",
           "I would like to practice French",
+        ]
+      : language === "it"
+      ? [
+          "Dov'è il bagno, per favore?",
+          "A table for two, please",
+          "Quanto costa questo cappuccino?",
+          "I would like to practice Italian",
         ]
       : [
           "¿Dónde está el baño?",

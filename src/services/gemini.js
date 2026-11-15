@@ -1,4 +1,4 @@
-import { MINI_LEXICON_DATA } from "../data/languages";
+import { MINI_LEXICON_DATA } from "../data/languages.js";
 
 // In-memory cache for audio playback (speeds up alphabet, cards, and common phrases to 0ms)
 export const ttsAudioCache = new Map();
@@ -226,7 +226,45 @@ export function extractJson(text) {
 
 export function buildFallbackTutorReply(userInput, scenarioId, lang = "es") {
   const raw = userInput.trim();
-  const cleanScId = scenarioId.replace(/^(es|fr)_/, "");
+  const cleanScId = scenarioId.replace(/^(es|fr|it)_/, "");
+
+  if (lang === "it") {
+    const replies = {
+      coffee: [
+        { spanish: "Certamente! Vuole un caffè espresso al banco o preferisce accomodarsi a un tavolo?", pronunciation: "chehr-tah-MEHN-teh! VWOH-leh oon kahf-FEH ehs-PREHS-soh ahl BAHN-koh...", english: "Certainly! Would you like an espresso at the counter or prefer sitting at a table?", starters: ["Un caffè al banco, grazie", "Al tavolo, per favore"] },
+        { spanish: "Benissimo! Sono due euro e cinquanta. Desidera anche un cornetto caldo?", pronunciation: "beh-NEES-see-moh! SOH-noh DOO-eh EH-oo-roh eh cheen-KWAHN-tah...", english: "Very well! That's 2.50 euros. Would you like a warm croissant as well?", starters: ["Sì, un cornetto alla crema", "No grazie, solo il caffè"] },
+      ],
+      meet: [
+        { spanish: "Molto interessante! Da quanto tempo stai studiando l'italiano?", pronunciation: "MOHL-toh een-teh-rehs-SAHN-teh! dah KWAHN-toh TEHM-poh stye stoo-DYAHN-doh leeh-tahl-YAH-noh?", english: "Very interesting! How long have you been studying Italian?", starters: ["Da poche settimane", "Ho iniziato da poco"] },
+        { spanish: "Ottimo! Hai un'ottima pronuncia. Qual è la tua città italiana preferita?", pronunciation: "OHT-tee-moh! eye OHT-tee-mah proh-NOON-chah. kwahl eh lah TOO-ah cheet-TAH ee-tahl-YAH-nah pray-feh-REE-tah?", english: "Great! You have great pronunciation. What's your favourite Italian city?", starters: ["Mi piace molto Roma", "Firenze è bellissima"] },
+      ],
+      airport: [
+        { spanish: "Tutto in regola. Il Suo treno parte dal binario numero cinque.", pronunciation: "TOOT-toh een REH-goh-lah. eel SOO-oh TREH-noh PAHR-teh dahl bee-NAH-ryoh NOO-meh-roh CHEEN-kweh.", english: "Everything is in order. Your train departs from platform number five.", starters: ["A che ora parte il treno?", "Grazie mille per l'aiuto!"] },
+        { spanish: "Il treno parte tra dieci minuti esatti. Buon viaggio!", pronunciation: "eel TREH-noh PAHR-teh trah DYEH-chee mee-NOO-tee eh-ZAHT-tee. bwon VYAH-joh!", english: "The train departs in exactly ten minutes. Have a good trip!", starters: ["Grazie, arrivederci!", "Perfetto, vado subito"] },
+      ],
+      free: [
+        { spanish: "Eccellente! Sono molto felice di parlare con te. Cosa hai fatto di bello oggi?", pronunciation: "ehch-chehl-LEHN-teh! SOH-noh MOHL-toh feh-LEE-cheh dee pahr-LAH-reh kohn teh...", english: "Excellent! I'm very happy to speak with you. What did you do today?", starters: ["Ho studiato e preso un caffè", "Ho fatto una bella passeggiata"] },
+        { spanish: "Fantastico! Fare pratica ogni giorno è il segreto per imparare bene l'italiano.", pronunciation: "fahn-TAHS-tee-koh! FAH-reh PRAH-tee-kah OHN-yee JOHR-noh...", english: "Fantastic! Practicing every day is the secret to learning Italian well.", starters: ["Mi piace ascoltare musica", "Leggere libri in italiano"] },
+      ],
+    };
+
+    const pool = replies[cleanScId] || replies.free;
+    const pick = pool[raw.length % pool.length];
+
+    return {
+      spanish: pick.spanish,
+      pronunciation: pick.pronunciation,
+      english: pick.english,
+      correction: {
+        has_mistake: false,
+        original: raw,
+        corrected_spanish: raw,
+        explanation: "La tua frase è chiarissima e naturale!",
+      },
+      suggested_replies: pick.starters,
+      mode: "practice",
+    };
+  }
 
   if (lang === "fr") {
     const replies = {
@@ -326,6 +364,33 @@ export function buildFallbackTutorReply(userInput, scenarioId, lang = "es") {
 export function buildFallbackVocabDeck(topic, lang = "es") {
   const cleanTopic = topic.trim();
 
+  if (lang === "it") {
+    const words = [
+      [`Il tema: ${cleanTopic}`, "eel TEH-mah", `Topic: ${cleanTopic}`, `Oggi studio l'argomento ${cleanTopic}.`, `Today I study about ${cleanTopic}.`],
+      ["Imparare", "eem-pah-RAH-reh", "To learn", "Voglio imparare tante cose nuove.", "I want to learn many new things."],
+      ["La parola", "lah pah-ROH-lah", "Word", "Questa parola è molto utile.", "This word is very useful."],
+      ["Praticare", "prah-tee-KAH-reh", "To practice", "Mi piace praticare l'italiano ogni giorno.", "I like to practice Italian every day."],
+      ["Importante", "eem-pohr-TAHN-teh", "Important", "È una frase molto importante.", "It is a very important phrase."],
+      ["Facile", "FAH-chee-leh", "Easy", "L'italiano è musicale e divertente.", "Italian is musical and fun."],
+      ["Nuovo / Nuova", "NWOH-voh", "New", "Ho comprato un libro nuovo.", "I bought a new book."],
+      ["Tutti i giorni", "TOOT-tee ee JOHR-nee", "Every day", "Studio tutti i giorni con costanza.", "I study every day consistently."],
+      ["Cosa significa?", "KOH-zah seeg-NEE-fee-kah", "What does it mean?", "Cosa significa questa espressione?", "What does this expression mean?"],
+      ["Ho capito!", "oh kah-PEE-toh", "I understand! / I got it!", "Ora ho capito perfettamente.", "Now I understand perfectly."],
+    ];
+
+    return {
+      title: cleanTopic,
+      cards: words.map(([spanish, pronunciation, english, example_es, example_en], idx) => ({
+        id: `custom-${Date.now()}-${idx}`,
+        spanish,
+        pronunciation,
+        english,
+        example_es,
+        example_en,
+      })),
+    };
+  }
+
   if (lang === "fr") {
     const words = [
       [`Le thème : ${cleanTopic}`, "luh TEHM", `Topic: ${cleanTopic}`, `Aujourd'hui j'étudie ${cleanTopic}.`, `Today I study about ${cleanTopic}.`],
@@ -383,13 +448,27 @@ export function buildFallbackTranslation(text, direction, lang = "es") {
   const clean = text.trim();
   const lexicon = MINI_LEXICON_DATA[lang] || MINI_LEXICON_DATA.es;
 
-  const targetLangName = lang === "fr" ? "French" : "Spanish";
+  const targetLangName = lang === "fr" ? "French" : lang === "it" ? "Italian" : "Spanish";
   const resolvedDir = direction === "auto" ? "en-to-target" : direction;
 
   let translatedText = clean;
   let englishText = clean;
 
-  if (lang === "fr") {
+  if (lang === "it") {
+    if (/ciao/i.test(clean)) englishText = "Hello / Goodbye";
+    else if (/buongiorno/i.test(clean)) englishText = "Good morning / Good day";
+    else if (/grazie/i.test(clean)) englishText = "Thank you";
+    else if (/table for two/i.test(clean)) {
+      translatedText = "Un tavolo per due persone, per favore.";
+      englishText = "A table for two people, please.";
+    } else if (/where is the bathroom/i.test(clean)) {
+      translatedText = "Dov'è il bagno, per favore?";
+      englishText = "Where is the bathroom, please?";
+    } else if (/coffee with milk/i.test(clean) || /espresso/i.test(clean)) {
+      translatedText = "Un caffè espresso, per favore.";
+      englishText = "An espresso coffee, please.";
+    }
+  } else if (lang === "fr") {
     if (/bonjour/i.test(clean)) englishText = "Hello / Good day";
     else if (/merci/i.test(clean)) englishText = "Thank you";
     else if (/table for two/i.test(clean)) {

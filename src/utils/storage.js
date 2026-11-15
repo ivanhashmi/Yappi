@@ -1,4 +1,4 @@
-import { STORAGE_KEY, SCENARIOS_DATA, LANGUAGES } from "../data/languages";
+import { STORAGE_KEY, SCENARIOS_DATA, LANGUAGES } from "../data/languages.js";
 
 export function getLocalDateKey(date = new Date()) {
   const year = date.getFullYear();
@@ -106,7 +106,9 @@ export function loadSavedState() {
     if (!raw) return defaults;
     const parsed = JSON.parse(raw);
 
-    const selectedLanguage = parsed.selectedLanguage === "fr" ? "fr" : "es";
+    const selectedLanguage = LANGUAGES.some((l) => l.id === parsed.selectedLanguage)
+      ? parsed.selectedLanguage
+      : "es";
     const mergedChats = createInitialChats(selectedLanguage);
 
     if (parsed.chats && typeof parsed.chats === "object") {
@@ -133,7 +135,7 @@ export function loadSavedState() {
 
     const voiceEngine = savedSettings.voiceEngine || "gemini";
     const geminiVoice = savedSettings.geminiVoice || "Kore";
-    const defaultAcc = selectedLanguage === "fr" ? "fr-FR" : "es-ES";
+    const defaultAcc = LANGUAGES.find((l) => l.id === selectedLanguage)?.defaultAccent || "es-ES";
     const accent = savedSettings.accent || defaultAcc;
     const theme = savedSettings.theme === "light" ? "light" : "amoled";
 

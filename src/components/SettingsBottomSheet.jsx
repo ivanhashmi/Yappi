@@ -181,6 +181,8 @@ export default function SettingsBottomSheet({
                         <p className="text-[11px] text-[#86868B] dark:text-[#A1A1A6] font-medium leading-tight mt-0.5">
                           {l.id === "es"
                             ? "Castilian & Mexican Spanish · 27 Letters"
+                            : l.id === "it"
+                            ? "Standard & Regional Italian · 21 Letters & Double Consonants"
                             : "Parisian & Canadian French · 26 Letters & Accents"}
                         </p>
                       </div>
@@ -358,7 +360,7 @@ export default function SettingsBottomSheet({
                 </select>
 
                 <div className="mt-1.5 p-2 rounded-xl bg-black/[0.03] dark:bg-white/[0.05] border border-black/[0.04] dark:border-white/[0.06] text-[11px] text-[#86868B] dark:text-[#A1A1A6] leading-relaxed">
-                  💡 macOS includes free neural Siri voices for Spanish & French! In Mac <strong>System Settings → Accessibility → Spoken Content → Manage Voices</strong> download Enhanced versions.
+                  💡 macOS includes free neural Siri voices for Spanish, French & Italian! In Mac <strong>System Settings → Accessibility → Spoken Content → Manage Voices</strong> download Enhanced versions.
                 </div>
               </div>
             )}

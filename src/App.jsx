@@ -231,7 +231,7 @@ export default function App() {
       try {
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
-        const defaultAcc = currentLang === "fr" ? "fr-FR" : "es-ES";
+        const defaultAcc = currentLangConfig?.defaultAccent || (currentLang === "fr" ? "fr-FR" : currentLang === "it" ? "it-IT" : "es-ES");
         const preferred = appState.settings.accent || defaultAcc;
         const voice = pickNativeVoice(preferred, appState.settings.selectedVoiceURI);
         if (voice) utterance.voice = voice;

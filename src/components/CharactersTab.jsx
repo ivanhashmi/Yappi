@@ -102,8 +102,8 @@ export default function CharactersTab({
     };
   }, []);
 
-  const langKey = language === "fr" ? "fr" : "es";
-  const langName = language === "fr" ? "French" : "Spanish";
+  const langKey = language === "fr" ? "fr" : language === "it" ? "it" : "es";
+  const langName = language === "fr" ? "French" : language === "it" ? "Italian" : "Spanish";
   const allCharacters = useMemo(() => CHARACTERS_DATA[langKey] || CHARACTERS_DATA.es, [langKey]);
 
   const updateChatThread = useCallback(
@@ -326,10 +326,14 @@ Respond ONLY with raw JSON matching this structure (no markdown):
           text:
             langKey === "fr"
               ? `C'est très intéressant ! Dis-moi, qu'en penses-tu vraiment ?`
+              : langKey === "it"
+              ? `È molto interessante! Dimmi, tu cosa ne pensi veramente?`
               : `¡Qué interesante! Cuéntame, ¿qué piensas tú de eso?`,
           pronunciation:
             langKey === "fr"
               ? "say tray z-an-tay-reh-SAHN! dee-mwah, kahn pahn-soo vray-MAHN?"
+              : langKey === "it"
+              ? "eh MOHL-toh een-teh-rehs-SAHN-teh! DEEM-mee, too KOH-zah neh PEHN-see veh-rah-MEHN-teh?"
               : "¡keh een-teh-reh-SAHN-teh! KWEHN-tah-meh, ¿keh PYEHN-sahs too deh EH-soh?",
           english: "How interesting! Tell me, what do you really think about that?",
           correction: null,
@@ -366,7 +370,7 @@ Respond ONLY with raw JSON matching this structure (no markdown):
       const rec = new SpeechClass();
       recognitionRef.current = rec;
 
-      rec.lang = settings?.accent || (langKey === "fr" ? "fr-FR" : "es-ES");
+      rec.lang = settings?.accent || (langKey === "fr" ? "fr-FR" : langKey === "it" ? "it-IT" : "es-ES");
       rec.continuous = false;
       rec.interimResults = true;
 

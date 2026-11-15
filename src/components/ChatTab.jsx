@@ -32,7 +32,7 @@ export default function ChatTab({
   }, []);
 
   const scenarios = SCENARIOS_DATA[language] || SCENARIOS_DATA.es;
-  const langName = language === "fr" ? "French" : "Spanish";
+  const langName = language === "fr" ? "French" : language === "it" ? "Italian" : "Spanish";
 
   const recognitionRef = useRef(null);
   const endRef = useRef(null);
@@ -124,7 +124,7 @@ Respond ONLY with raw JSON (no markdown):
       const tutorMsg = {
         id: `t-${Date.now()}`,
         sender: "tutor",
-        spanish: replyData.spanish || (language === "fr" ? "Très bien !" : "¡Muy bien!"),
+        spanish: replyData.spanish || (language === "fr" ? "Très bien !" : language === "it" ? "Benissimo!" : "¡Muy bien!"),
         pronunciation: replyData.pronunciation || "",
         english: replyData.english || "",
         correction: replyData.correction || null,
@@ -155,7 +155,7 @@ Respond ONLY with raw JSON (no markdown):
       const rec = new SpeechClass();
       recognitionRef.current = rec;
 
-      rec.lang = settings.accent || (language === "fr" ? "fr-FR" : "es-ES");
+      rec.lang = settings.accent || (language === "fr" ? "fr-FR" : language === "it" ? "it-IT" : "es-ES");
       rec.continuous = false;
       rec.interimResults = true;
       rec.maxAlternatives = 1;

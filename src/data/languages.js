@@ -35,6 +35,23 @@ export const LANGUAGES = [
     sampleSpeech: "Bonjour ! Bienvenue à votre cours de français.",
     aiTutorPersona: "Amélie",
   },
+  {
+    id: "it",
+    code: "it",
+    name: "Italian",
+    nativeName: "Italiano",
+    flag: "🇮🇹",
+    appTitle: "Yappi",
+    subtitle: "Principiante · Italiano",
+    logoBadge: "¡Ciao!",
+    defaultAccent: "it-IT",
+    accents: [
+      { id: "it-IT", label: "Italy (Standard — Rome & Florence)" },
+      { id: "it-MI", label: "Northern (Milanese / Lombard)" },
+    ],
+    sampleSpeech: "Ciao! Benvenuto al tuo corso di italiano.",
+    aiTutorPersona: "Chiara",
+  },
 ];
 
 export const GEMINI_MODELS = [
@@ -131,14 +148,49 @@ const FRENCH_SPECIAL_SOUNDS = [
   { letter: "AN / ON / IN", name: "voyelles nasales", tts: "bonjour", word: "bonjour", meaning: "hello", tip: "Air flows through the nose without pronouncing the N!" },
 ];
 
+// Italian 21 Letters
+const ITALIAN_ALPHABET = [
+  { letter: "A", lower: "a", name: "a", tts: "a", phonetic: "ah", word: "acqua", wordPhonetic: "AHK-wah", meaning: "water", tip: "Pure open 'ah', like in 'father'." },
+  { letter: "B", lower: "b", name: "bi", tts: "bi", phonetic: "bee", word: "barca", wordPhonetic: "BAHR-kah", meaning: "boat", tip: "Crisp 'b' with lips firmly together." },
+  { letter: "C", lower: "c", name: "ci", tts: "ci", phonetic: "chee", word: "casa", wordPhonetic: "KAH-zah", meaning: "house", tip: "Hard 'k' before a, o, u; soft 'ch' before e, i." },
+  { letter: "D", lower: "d", name: "di", tts: "di", phonetic: "dee", word: "dado", wordPhonetic: "DAH-doh", meaning: "dice", tip: "Tongue touches behind upper front teeth." },
+  { letter: "E", lower: "e", name: "e", tts: "e", phonetic: "eh", word: "erba", wordPhonetic: "EHR-bah", meaning: "grass", tip: "Clean 'eh', can be open or closed." },
+  { letter: "F", lower: "f", name: "effe", tts: "effe", phonetic: "EHF-feh", word: "fiore", wordPhonetic: "FYOH-reh", meaning: "flower", tip: "Same as English 'f'." },
+  { letter: "G", lower: "g", name: "gi", tts: "gi", phonetic: "jee", word: "gatto", wordPhonetic: "GAHT-toh", meaning: "cat", tip: "Hard 'g' before a, o, u; soft 'j' (gem) before e, i." },
+  { letter: "H", lower: "h", name: "acca", tts: "acca", phonetic: "AHK-kah", word: "hotel", wordPhonetic: "oh-TEHL", meaning: "hotel", tip: "Completely silent! Also hardens c/g (chi = kee)." },
+  { letter: "I", lower: "i", name: "i", tts: "i", phonetic: "ee", word: "isola", wordPhonetic: "EE-zoh-lah", meaning: "island", tip: "Always tight 'ee' like 'machine', never 'eye'." },
+  { letter: "L", lower: "l", name: "elle", tts: "elle", phonetic: "EHL-leh", word: "luna", wordPhonetic: "LOO-nah", meaning: "moon", tip: "Light clear 'l' against upper teeth." },
+  { letter: "M", lower: "m", name: "emme", tts: "emme", phonetic: "EHM-meh", word: "mare", wordPhonetic: "MAH-reh", meaning: "sea", tip: "Same as English 'm'." },
+  { letter: "N", lower: "n", name: "enne", tts: "enne", phonetic: "EHN-neh", word: "notte", wordPhonetic: "NOHT-teh", meaning: "night", tip: "Same as English 'n'." },
+  { letter: "O", lower: "o", name: "o", tts: "o", phonetic: "oh", word: "sole", wordPhonetic: "SOH-leh", meaning: "sun", tip: "Round pure 'oh' without any 'w' glide." },
+  { letter: "P", lower: "p", name: "pi", tts: "pi", phonetic: "pee", word: "pane", wordPhonetic: "PAH-neh", meaning: "bread", tip: "Non-aspirated, crisp 'p'." },
+  { letter: "Q", lower: "q", name: "cu", tts: "cu", phonetic: "koo", word: "quadro", wordPhonetic: "KWAH-droh", meaning: "painting", tip: "Always followed by 'u' + vowel (qua, que, qui, quo)." },
+  { letter: "R", lower: "r", name: "erre", tts: "erre", phonetic: "EHR-reh", word: "roma", wordPhonetic: "ROH-mah", meaning: "Rome", tip: "Rolled / tapped with tip of tongue." },
+  { letter: "S", lower: "s", name: "esse", tts: "esse", phonetic: "EHS-seh", word: "sole", wordPhonetic: "SOH-leh", meaning: "sun", tip: "Crisp 's' at start; voiced 'z' between vowels (casa)." },
+  { letter: "T", lower: "t", name: "ti", tts: "ti", phonetic: "tee", word: "tavolo", wordPhonetic: "TAH-voh-loh", meaning: "table", tip: "Tongue against back of upper front teeth." },
+  { letter: "U", lower: "u", name: "u", tts: "u", phonetic: "oo", word: "uva", wordPhonetic: "OO-vah", meaning: "grapes", tip: "Pure 'oo' as in 'boot'." },
+  { letter: "V", lower: "v", name: "vi", tts: "vi", phonetic: "vee", word: "vino", wordPhonetic: "VEE-noh", meaning: "wine", tip: "Distinct buzzing 'v' with top teeth on lower lip." },
+  { letter: "Z", lower: "z", name: "zeta", tts: "zeta", phonetic: "DZEH-tah", word: "pizza", wordPhonetic: "PEET-tsah", meaning: "pizza", tip: "Sounds like 'ts' in pizza or 'dz' in zero." },
+];
+
+const ITALIAN_SPECIAL_SOUNDS = [
+  { letter: "GLI", name: "gli", tts: "figlio", word: "figlio", meaning: "son", tip: "Sounds like 'lli' in 'million'." },
+  { letter: "GN", name: "gn", tts: "gnocchi", word: "gnocchi", meaning: "gnocchi", tip: "Sounds like 'ny' in 'canyon' (like Spanish ñ)." },
+  { letter: "CH / GH", name: "c/g dura", tts: "chianti", word: "chianti", meaning: "Chianti wine", tip: "'H' hardens C and G before E and I (che = keh, ghi = ghee)." },
+  { letter: "SC / SCH", name: "sci / sche", tts: "scelta", word: "scelta", meaning: "choice", tip: "'sc' before e/i is 'sh'; 'sch' is hard 'sk'." },
+  { letter: "DOPPIE", name: "doppie consonanti", tts: "notte", word: "notte", meaning: "night", tip: "Double consonants are held longer with crisp emphasis!" },
+];
+
 export const ALPHABET_DATA = {
   es: SPANISH_ALPHABET,
   fr: FRENCH_ALPHABET,
+  it: ITALIAN_ALPHABET,
 };
 
 export const SPECIAL_SOUNDS_DATA = {
   es: SPANISH_SPECIAL_SOUNDS,
   fr: FRENCH_SPECIAL_SOUNDS,
+  it: ITALIAN_SPECIAL_SOUNDS,
 };
 
 // Spanish Scenarios
@@ -245,9 +297,62 @@ const FRENCH_SCENARIOS = [
   },
 ];
 
+// Italian Scenarios
+const ITALIAN_SCENARIOS = [
+  {
+    id: "free",
+    title: "Conversazione Libera",
+    role: "Chiara · Tutrice",
+    description: "Conversazione quotidiana per principianti",
+    opening: {
+      spanish: "Ciao! Sono Chiara. Come ti chiami e come stai oggi?",
+      pronunciation: "CHOW! SOH-noh KYAH-rah. KOH-moh tee KYAH-mee eh KOH-moh STYE OH-jee?",
+      english: "Hi! I'm Chiara. What is your name and how are you today?",
+    },
+    starters: ["Ciao, mi chiamo Alex", "Sto molto bene, grazie", "Voglio imparare l'italiano"],
+  },
+  {
+    id: "coffee",
+    title: "Ordinare al Bar",
+    role: "Marco · Barista",
+    description: "Ordinare caffè e cornetti al bancone",
+    opening: {
+      spanish: "Buongiorno! Benvenuto al Bar Roma. Cosa posso portarti stamattina?",
+      pronunciation: "bwon-JOHR-noh! behn-veh-NOO-toh ahl BAHR ROH-mah. KOH-zah POHS-soh pohr-TAHR-tee stah-maht-TEE-nah?",
+      english: "Good morning! Welcome to Bar Roma. What can I get you this morning?",
+    },
+    starters: ["Un cappuccino e un cornetto, per favore", "Un caffè espresso al banco", "Quanto costa?"],
+  },
+  {
+    id: "meet",
+    title: "Fare Conoscenza",
+    role: "Lorenzo · Amico",
+    description: "Presentarsi e fare nuove amicizie",
+    opening: {
+      spanish: "Ciao! Piacere di conoscerti, sono Lorenzo. Di dove sei e cosa ti piace fare?",
+      pronunciation: "CHOW! pyah-CHEH-reh dee koh-NOH-shehr-tee, SOH-noh loh-REHN-dzoh. dee DOH-veh SAY eh KOH-zah tee PYAH-cheh FAH-reh?",
+      english: "Hi! Nice to meet you, I'm Lorenzo. Where are you from and what do you like to do?",
+    },
+    starters: ["Piacere! Vengo dal Canada", "Mi piace viaggiare e la musica", "E tu?"],
+  },
+  {
+    id: "airport",
+    title: "Stazione & Viaggi",
+    role: "Giulia · Assistente",
+    description: "Prendere il treno o l'aereo",
+    opening: {
+      spanish: "Buongiorno! Posso vedere il suo biglietto e un documento, per favore?",
+      pronunciation: "bwon-JOHR-noh! POHS-soh veh-DEH-reh eel SOO-oh beel-YEHT-toh eh oon doh-koo-MEHN-toh, pehr fah-VOH-reh?",
+      english: "Good day! May I see your ticket and ID, please?",
+    },
+    starters: ["Ecco il mio biglietto", "Dov'è il binario cinque?", "A che ora parte il treno?"],
+  },
+];
+
 export const SCENARIOS_DATA = {
   es: SPANISH_SCENARIOS,
   fr: FRENCH_SCENARIOS,
+  it: ITALIAN_SCENARIOS,
 };
 
 // Spanish Preset Decks
@@ -394,9 +499,82 @@ const FRENCH_DECKS = [
   },
 ];
 
+// Italian Preset Decks
+const ITALIAN_DECKS = [
+  {
+    id: "greetings",
+    title: "Greetings",
+    spanishTitle: "Saluti",
+    cards: [
+      { id: "it-gr-1", spanish: "Ciao!", pronunciation: "CHOW", english: "Hello / Goodbye (informal)", example_es: "Ciao! Come stai?", example_en: "Hi! How are you?" },
+      { id: "it-gr-2", spanish: "Buongiorno", pronunciation: "bwon-JOHR-noh", english: "Good morning / Good day", example_es: "Buongiorno signor Rossi.", example_en: "Good morning Mr. Rossi." },
+      { id: "it-gr-3", spanish: "Buonasera", pronunciation: "bwon-ah-SEH-rah", english: "Good evening", example_es: "Buonasera a tutti!", example_en: "Good evening everyone!" },
+      { id: "it-gr-4", spanish: "Buonanotte", pronunciation: "bwon-ah-NOHT-teh", english: "Good night", example_es: "Buonanotte e sogni d'oro.", example_en: "Good night and sweet dreams." },
+      { id: "it-gr-5", spanish: "Come stai?", pronunciation: "KOH-moh STYE", english: "How are you? (informal)", example_es: "Ciao Marco, come stai?", example_en: "Hi Marco, how are you?" },
+      { id: "it-gr-6", spanish: "Molto bene, grazie", pronunciation: "MOHL-toh BEH-neh, GRAHT-syeh", english: "Very well, thank you", example_es: "Sto molto bene, grazie!", example_en: "I'm doing very well, thank you!" },
+      { id: "it-gr-7", spanish: "Piacere di conoscerti", pronunciation: "pyah-CHEH-reh dee koh-NOH-shehr-tee", english: "Nice to meet you", example_es: "Mi chiamo Giulia. Piacere!", example_en: "My name is Giulia. Nice to meet you!" },
+      { id: "it-gr-8", spanish: "Per favore", pronunciation: "pehr fah-VOH-reh", english: "Please", example_es: "Un caffè, per favore.", example_en: "A coffee, please." },
+      { id: "it-gr-9", spanish: "Prego", pronunciation: "PREH-goh", english: "You're welcome / After you", example_es: "—Grazie mille! —Prego!", example_en: "—Thanks a thousand! —You're welcome!" },
+      { id: "it-gr-10", spanish: "Arrivederci", pronunciation: "ahr-ree-veh-DEHR-chee", english: "Goodbye (formal/polite)", example_es: "Grazie di tutto, arrivederci!", example_en: "Thanks for everything, goodbye!" },
+    ],
+  },
+  {
+    id: "food",
+    title: "Food",
+    spanishTitle: "Cibo",
+    cards: [
+      { id: "it-fd-1", spanish: "Il caffè espresso", pronunciation: "eel kahf-FEH ehs-PREHS-soh", english: "Espresso coffee", example_es: "Prendo un caffè espresso al banco.", example_en: "I'll have an espresso at the counter." },
+      { id: "it-fd-2", spanish: "Il cornetto", pronunciation: "eel kohr-NEHT-toh", english: "Croissant / pastry", example_es: "Un cornetto alla crema, per favore.", example_en: "A cream croissant, please." },
+      { id: "it-fd-3", spanish: "La pizza", pronunciation: "lah PEET-tsah", english: "Pizza", example_es: "La pizza Margherita è buonissima.", example_en: "The Margherita pizza is delicious." },
+      { id: "it-fd-4", spanish: "L'acqua naturale", pronunciation: "LAHK-wah nah-too-RAH-leh", english: "Still water", example_es: "Una bottiglia d'acqua naturale, per favore.", example_en: "A bottle of still water, please." },
+      { id: "it-fd-5", spanish: "Il formaggio", pronunciation: "eel fohr-MAHD-joh", english: "Cheese", example_es: "Il Parmigiano è un formaggio famoso.", example_en: "Parmesan is a famous cheese." },
+      { id: "it-fd-6", spanish: "La mela", pronunciation: "lah MEH-lah", english: "Apple", example_es: "Mangio una mela verde ogni giorno.", example_en: "I eat a green apple every day." },
+      { id: "it-fd-7", spanish: "La pasta", pronunciation: "lah PAH-stah", english: "Pasta", example_es: "La pasta è al dente e gustosa.", example_en: "The pasta is al dente and tasty." },
+      { id: "it-fd-8", spanish: "Ho fame", pronunciation: "oh FAH-meh", english: "I am hungry", example_es: "Ho molta fame, andiamo a mangiare?", example_en: "I'm very hungry, shall we eat?" },
+      { id: "it-fd-9", spanish: "È delizioso!", pronunciation: "eh deh-leet-TSYOH-zoh", english: "It's delicious!", example_es: "Questo tiramisù è delizioso!", example_en: "This tiramisu is delicious!" },
+      { id: "it-fd-10", spanish: "Il conto, per favore", pronunciation: "eel KOHN-toh pehr fah-VOH-reh", english: "The check, please", example_es: "Scusi, possiamo avere il conto?", example_en: "Excuse me, may we have the check?" },
+    ],
+  },
+  {
+    id: "travel",
+    title: "Travel",
+    spanishTitle: "Viaggi",
+    cards: [
+      { id: "it-tr-1", spanish: "La stazione", pronunciation: "lah staht-SYOH-neh", english: "Train station", example_es: "Il taxi va alla stazione centrale.", example_en: "The taxi goes to the central station." },
+      { id: "it-tr-2", spanish: "L'aeroporto", pronunciation: "lah-eh-roh-POHR-toh", english: "Airport", example_es: "Dov'è il controllo di sicurezza?", example_en: "Where is security check?" },
+      { id: "it-tr-3", spanish: "Il passaporto", pronunciation: "eel pahs-sah-POHR-toh", english: "Passport", example_es: "Ecco il mio passaporto valido.", example_en: "Here is my valid passport." },
+      { id: "it-tr-4", spanish: "Il biglietto", pronunciation: "eel beel-YEHT-toh", english: "Ticket", example_es: "Un biglietto per Firenze, per favore.", example_en: "A ticket to Florence, please." },
+      { id: "it-tr-5", spanish: "La valigia", pronunciation: "lah vah-LEE-jah", english: "Suitcase", example_es: "La mia valigia è molto pesante.", example_en: "My suitcase is very heavy." },
+      { id: "it-tr-6", spanish: "L'albergo", pronunciation: "lahl-BEHR-goh", english: "Hotel", example_es: "L'albergo si trova in centro.", example_en: "The hotel is located in the center." },
+      { id: "it-tr-7", spanish: "Dov'è il bagno?", pronunciation: "doh-VEH eel BAHN-yoh", english: "Where is the bathroom?", example_es: "Scusi, sa dov'è il bagno?", example_en: "Excuse me, do you know where the bathroom is?" },
+      { id: "it-tr-8", spanish: "A destra", pronunciation: "ah DEHS-trah", english: "To the right", example_es: "Gira a destra al semaforo.", example_en: "Turn right at the traffic light." },
+      { id: "it-tr-9", spanish: "A sinistra", pronunciation: "ah see-NEES-trah", english: "To the left", example_es: "Il museo è a sinistra della piazza.", example_en: "The museum is to the left of the square." },
+      { id: "it-tr-10", spanish: "Quanto costa?", pronunciation: "KWAHN-toh KOHS-tah", english: "How much does it cost?", example_es: "Scusi, quanto costa questo souvenir?", example_en: "Excuse me, how much is this souvenir?" },
+    ],
+  },
+  {
+    id: "numbers",
+    title: "Numbers",
+    spanishTitle: "Numeri",
+    cards: [
+      { id: "it-nm-1", spanish: "Uno", pronunciation: "OO-noh", english: "One (1)", example_es: "Un caffè per favore.", example_en: "One coffee please." },
+      { id: "it-nm-2", spanish: "Due", pronunciation: "DOO-eh", english: "Two (2)", example_es: "Un tavolo per due persone.", example_en: "A table for two people." },
+      { id: "it-nm-3", spanish: "Tre", pronunciation: "treh", english: "Three (3)", example_es: "Sono le tre del pomeriggio.", example_en: "It is three in the afternoon." },
+      { id: "it-nm-4", spanish: "Quattro", pronunciation: "KWAHT-troh", english: "Four (4)", example_es: "Quattro cornetti caldi, grazie.", example_en: "Four warm croissants, thanks." },
+      { id: "it-nm-5", spanish: "Cinque", pronunciation: "CHEEN-kweh", english: "Five (5)", example_es: "Arrivo tra cinque minuti.", example_en: "I'll arrive in five minutes." },
+      { id: "it-nm-6", spanish: "Sei", pronunciation: "SEH-ee", english: "Six (6)", example_es: "Lui ha sei anni.", example_en: "He is six years old." },
+      { id: "it-nm-7", spanish: "Sette", pronunciation: "SEHT-teh", english: "Seven (7)", example_es: "Ci sono sette giorni nella settimana.", example_en: "There are seven days in a week." },
+      { id: "it-nm-8", spanish: "Otto", pronunciation: "OHT-toh", english: "Eight (8)", example_es: "Il treno parte dal binario otto.", example_en: "The train departs from platform eight." },
+      { id: "it-nm-9", spanish: "Nove", pronunciation: "NOH-veh", english: "Nine (9)", example_es: "Costa nove euro.", example_en: "It costs nine euros." },
+      { id: "it-nm-10", spanish: "Dieci", pronunciation: "DYEH-chee", english: "Ten (10)", example_es: "Dieci e lode, fantastico!", example_en: "Ten out of ten with honors, fantastic!" },
+    ],
+  },
+];
+
 export const PRESET_DECKS_DATA = {
   es: SPANISH_DECKS,
   fr: FRENCH_DECKS,
+  it: ITALIAN_DECKS,
 };
 
 export const MINI_LEXICON_DATA = {
@@ -430,5 +608,23 @@ export const MINI_LEXICON_DATA = {
     croissant: { en: "croissant", pos: "Noun (m.)", pron: "krwah-SAHN", note: "Traditional French pastry." },
     pain: { en: "bread", pos: "Noun (m.)", pron: "pan", note: "Nasal vowel sound." },
     eau: { en: "water", pos: "Noun (f.)", pron: "oh", note: "Spelled 'eau', sounds like 'o'." },
+  },
+  it: {
+    ciao: { en: "hello / goodbye", pos: "Interjection", pron: "CHOW", note: "Informal greeting used for both hello and goodbye." },
+    buongiorno: { en: "good morning / good day", pos: "Interjection", pron: "bwon-JOHR-noh", note: "Formal polite greeting until late afternoon." },
+    grazie: { en: "thank you", pos: "Interjection", pron: "GRAHT-syeh", note: "Double-z pronounced 'ts'." },
+    prego: { en: "you're welcome / please", pos: "Interjection", pron: "PREH-goh", note: "Polite response to grazie, or offering a seat." },
+    per: { en: "for / please", pos: "Preposition", pron: "pehr", note: "Used in 'per favore' (please)." },
+    favore: { en: "favor", pos: "Noun (m.)", pron: "fah-VOH-reh", note: "Part of 'per favore'." },
+    io: { en: "I", pos: "Pronoun", pron: "EE-oh", note: "Subject pronoun, often omitted in verbs." },
+    tu: { en: "you", pos: "Pronoun", pron: "too", note: "Informal singular you." },
+    lei: { en: "you (formal) / she", pos: "Pronoun", pron: "LAY", note: "Polite formal you (capitalized) or she." },
+    vorrei: { en: "I would like", pos: "Verb", pron: "vohr-RAY", note: "Polite conditional form of 'volere'." },
+    voglio: { en: "I want", pos: "Verb", pron: "VOHL-yoh", note: "Present tense of 'volere'." },
+    ho: { en: "I have", pos: "Verb", pron: "oh", note: "From 'avere', silent 'h'." },
+    sono: { en: "I am / they are", pos: "Verb", pron: "SOH-noh", note: "From 'essere'." },
+    caffè: { en: "coffee", pos: "Noun (m.)", pron: "kahf-FEH", note: "Usually means espresso in Italy." },
+    acqua: { en: "water", pos: "Noun (f.)", pron: "AHK-wah", note: "Spelled with 'cq'." },
+    pizza: { en: "pizza", pos: "Noun (f.)", pron: "PEET-tsah", note: "World-famous Italian icon." },
   },
 };
