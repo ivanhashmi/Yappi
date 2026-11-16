@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Icon from "./Icon";
+import { Chip, Button } from "./ui";
 import { SCENARIOS_DATA } from "../data/languages";
 import { callAI, extractJson, buildFallbackTutorReply } from "../services/gemini";
+import { triggerHaptic } from "../utils/haptics";
 
 /* ============================================================================
- * TAB 1: CHAT — AI Voice Tutor with Live Audio & Smart Corrections
+ * TAB 1: CHAT — Apple / Google Minimal AI Voice Tutor
  * ========================================================================== */
 export default function ChatTab({
   language = "es",
@@ -67,6 +69,7 @@ export default function ChatTab({
       setInput("");
       setSpeechError("");
       recordPractice();
+      triggerHaptic("light");
 
       const userMsg = {
         id: `u-${Date.now()}`,
@@ -80,7 +83,7 @@ export default function ChatTab({
       setIsLoading(true);
 
       let replyData = null;
-      let replyMode = "claude";
+      let replyMode = "gemini";
 
       try {
         const recentForContext = nextHistory.slice(-8).map((m) => ({
@@ -124,11 +127,19 @@ Respond ONLY with raw JSON (no markdown):
       const tutorMsg = {
         id: `t-${Date.now()}`,
         sender: "tutor",
-        spanish: replyData.spanish || (language === "fr" ? "Très bien !" : language === "it" ? "Benissimo!" : "¡Muy bien!"),
+        spanish:
+          replyData.spanish ||
+          (language === "fr"
+            ? "Très bien !"
+            : language === "it"
+            ? "Benissimo!"
+            : "¡Muy bien!"),
         pronunciation: replyData.pronunciation || "",
         english: replyData.english || "",
         correction: replyData.correction || null,
-        suggested_replies: Array.isArray(replyData.suggested_replies) ? replyData.suggested_replies : [],
+        suggested_replies: Array.isArray(replyData.suggested_replies)
+          ? replyData.suggested_replies
+          : [],
         mode: replyMode,
         timestamp: Date.now(),
       };
@@ -140,7 +151,20 @@ Respond ONLY with raw JSON (no markdown):
         speakSpanish(tutorMsg.spanish);
       }
     },
-    [input, isLoading, messages, chatKey, activeScenarioId, scenario, langName, language, settings, onUpdateChat, speakSpanish, recordPractice]
+    [
+      input,
+      isLoading,
+      messages,
+      chatKey,
+      activeScenarioId,
+      scenario,
+      langName,
+      language,
+      settings,
+      onUpdateChat,
+      speakSpanish,
+      recordPractice,
+    ]
   );
 
   const startVoiceInput = () => {
@@ -155,7 +179,9 @@ Respond ONLY with raw JSON (no markdown):
       const rec = new SpeechClass();
       recognitionRef.current = rec;
 
-      rec.lang = settings.accent || (language === "fr" ? "fr-FR" : language === "it" ? "it-IT" : "es-ES");
+      rec.lang =
+        settings.accent ||
+        (language === "fr" ? "fr-FR" : language === "it" ? "it-IT" : "es-ES");
       rec.continuous = false;
       rec.interimResults = true;
       rec.maxAlternatives = 1;
@@ -169,36 +195,36 @@ Respond ONLY with raw JSON (no markdown):
         let interim = "";
         let final = "";
         for (let i = evt.resultIndex; i < evt.results.length; i++) {
-          const res = evt.results[i];
-          if (res.isFinal) {
-            final += res[0].transcript;
+          const item = evt.results[i];
+          if (item.isFinal) {
+            final += item[0].transcript;
           } else {
-            interim += res[0].transcript;
+            interim += item[0].transcript;
           }
         }
-        if (interim) setInterimText(interim);
         if (final) {
-          setInput(final);
+          setInput((prev) => (prev ? `${prev} ${final.trim()}` : final.trim()));
           setInterimText("");
-          setIsListening(false);
-          sendMessage(final);
+        } else {
+          setInterimText(interim);
         }
       };
 
-      rec.onerror = (e) => {
+      rec.onerror = (err) => {
         setIsListening(false);
         setInterimText("");
-        if (e.error !== "no-speech") {
-          setSpeechError(`Speech input error: ${e.error}`);
+        if (err.error !== "no-speech") {
+          setSpeechError(`Voice error: ${err.error || "Could not recognize audio"}`);
         }
       };
 
       rec.onend = () => {
         setIsListening(false);
+        setInterimText("");
       };
 
       rec.start();
-    } catch (err) {
+    } catch {
       setIsListening(false);
       setSpeechError("Microphone access could not be started.");
     }
@@ -230,7 +256,11 @@ Respond ONLY with raw JSON (no markdown):
   const latestSuggestions = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i--) {
       const msg = messages[i];
-      if (msg.sender === "tutor" && Array.isArray(msg.suggested_replies) && msg.suggested_replies.length > 0) {
+      if (
+        msg.sender === "tutor" &&
+        Array.isArray(msg.suggested_replies) &&
+        msg.suggested_replies.length > 0
+      ) {
         return msg.suggested_replies;
       }
     }
@@ -238,73 +268,73 @@ Respond ONLY with raw JSON (no markdown):
   }, [messages, scenario.starters]);
 
   return (
-    <div className="flex flex-col h-full flex-1">
-      {/* Scenario Picker Carousel Header */}
-      <div className="space-y-2 mb-3">
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+    <div className="flex flex-col h-full flex-1 max-w-2xl mx-auto w-full">
+      {/* Scenario Picker Strip */}
+      <div className="space-y-3 mb-4">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
           {scenarios.map((sc) => {
             const active = sc.id === activeScenarioId;
             return (
-              <button
+              <Chip
                 key={sc.id}
-                type="button"
-                onClick={() => setActiveScenarioId(sc.id)}
-                className={`press-scale whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-                  active
-                    ? "bg-[#007AFF] dark:bg-[#0A84FF] text-white shadow-xs"
-                    : "bg-black/5 dark:bg-white/[0.08] text-[#1D1D1F] dark:text-[#F5F5F7] hover:bg-black/10 dark:hover:bg-white/[0.14]"
-                }`}
+                active={active}
+                onClick={() => {
+                  triggerHaptic("selection");
+                  setActiveScenarioId(sc.id);
+                }}
               >
                 {sc.title}
-              </button>
+              </Chip>
             );
           })}
         </div>
 
-        <div className="flex items-center justify-between text-[11px] text-[#86868B] dark:text-[#A1A1A6] px-1">
-          <div className="flex items-center gap-1.5">
-            <span className={`w-2 h-2 rounded-full ${apiConnected ? "bg-[#34C759] shadow-[0_0_6px_#34C759]" : "bg-[#FF9500]"}`} />
-            <span className="font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">
-              {apiConnected ? "✨ Gemini AI Online" : "Practice Mode (Offline)"}
+        {/* Quiet Sub-bar: Status & Controls */}
+        <div className="flex items-center justify-between text-caption text-muted px-1">
+          <div className="flex items-center gap-2">
+            <span
+              className={`w-2 h-2 rounded-full ${
+                apiConnected ? "bg-status-success" : "bg-status-warning"
+              }`}
+            />
+            <span className="font-medium text-primary">
+              {apiConnected ? "Gemini AI" : "Practice Mode"}
             </span>
           </div>
-          <div className="flex items-center gap-2">
+
+          <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={onToggleAutoSpeak}
-              className="press-scale font-semibold text-[#007AFF] dark:text-[#0A84FF] cursor-pointer"
+              className="press-scale inline-flex items-center gap-1 font-medium text-muted hover:text-primary cursor-pointer"
+              title="Toggle automatic speech synthesis"
             >
-              Voice: {settings.autoSpeak ? "ON" : "OFF"}
+              <Icon name="volume" className="w-3.5 h-3.5" />
+              <span>Audio {settings.autoSpeak ? "On" : "Off"}</span>
             </button>
             <button
               type="button"
               onClick={resetScenarioChat}
-              className="press-scale text-[#86868B] dark:text-[#A1A1A6] hover:text-[#1D1D1F] dark:hover:text-white cursor-pointer"
+              className="press-scale inline-flex items-center gap-1 font-medium text-muted hover:text-primary cursor-pointer"
+              title="Restart conversation"
             >
-              Restart
+              <Icon name="refresh" className="w-3.5 h-3.5" />
+              <span>Restart</span>
             </button>
           </div>
         </div>
       </div>
 
       {/* Messages Stream */}
-      <div className="flex-1 space-y-3 overflow-y-auto mb-3 max-h-[calc(100vh-250px)]">
-        {!apiConnected && (
-          <div
-            onClick={onOpenSettings}
-            className="press-scale flex items-center justify-between p-2.5 rounded-2xl bg-[#FF9500]/10 border border-[#FF9500]/30 text-xs cursor-pointer mb-1"
-          >
-            <span className="text-[#FF9500] font-semibold">
-              ⚡ Practice Mode (Pre-set responses)
-            </span>
-            <span className="text-[11px] font-bold text-[#007AFF] dark:text-[#0A84FF]">Status →</span>
-          </div>
-        )}
-
+      <div className="flex-1 space-y-4 overflow-y-auto mb-4 pr-1 min-h-[300px]">
         {apiError && (
-          <div className="p-2.5 rounded-2xl bg-[#FF3B30]/10 border border-[#FF3B30]/30 text-xs font-semibold text-[#FF3B30] dark:text-[#FF453A] mb-1 flex items-center justify-between">
-            <span>⚠️ {apiError}</span>
-            <button onClick={onOpenSettings} className="underline text-[11px] font-bold cursor-pointer">
+          <div className="p-3.5 rounded-2xl bg-subtle border border-status-error/30 text-caption text-status-error flex items-center justify-between">
+            <span>{apiError}</span>
+            <button
+              type="button"
+              onClick={onOpenSettings}
+              className="underline font-semibold cursor-pointer ml-2"
+            >
               Settings
             </button>
           </div>
@@ -313,90 +343,93 @@ Respond ONLY with raw JSON (no markdown):
         {messages.map((msg) => {
           if (msg.sender === "user") {
             return (
-              <div key={msg.id} className="flex justify-end">
-                <div className="max-w-[85%] bg-[#007AFF] dark:bg-[#0A84FF] text-white rounded-[20px] rounded-br-[4px] px-3.5 py-2.5 shadow-sm">
-                  <p className="text-sm font-medium leading-snug">{msg.text}</p>
+              <div key={msg.id} className="flex flex-col items-end gap-1">
+                <div className="max-w-[85%] sm:max-w-[75%] bg-accent text-accent-contrast rounded-2xl rounded-br-xs px-4 py-2.5 shadow-xs">
+                  <p className="text-body font-normal leading-relaxed">{msg.text}</p>
                 </div>
               </div>
             );
           }
 
           return (
-            <div key={msg.id} className="space-y-2 max-w-[92%]">
-              {/* Separate Mistake Correction Box */}
-              {msg.correction && msg.correction.has_mistake && (
-                <div className="bg-[#FF9500]/[0.08] dark:bg-[#FF9F0A]/15 border border-[#FF9500]/30 rounded-2xl p-3">
-                  <div className="flex items-center justify-between gap-1 mb-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#FF9500] dark:text-[#FF9F0A]">
-                      Correction
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => speakSpanish(msg.correction.corrected_spanish)}
-                      className="press-scale px-2 py-0.5 rounded-full bg-[#FF9500]/15 text-[10px] font-bold text-[#FF9500] dark:text-[#FF9F0A] flex items-center gap-1 cursor-pointer"
-                    >
-                      <Icon name="volume" className="w-3 h-3" />
-                      Hear
-                    </button>
-                  </div>
-                  <div className="text-xs text-[#86868B] dark:text-[#A1A1A6] line-through mb-0.5">
-                    {msg.correction.original}
-                  </div>
-                  <div className="text-sm font-bold text-[#1D1D1F] dark:text-[#F5F5F7]">
-                    ✓ {msg.correction.corrected_spanish}
-                  </div>
-                  {msg.correction.explanation && (
-                    <p className="text-xs text-[#86868B] dark:text-[#A1A1A6] mt-1 leading-snug">
-                      {msg.correction.explanation}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {/* Tutor Speech Card */}
-              <div className="material-card rounded-[20px] rounded-tl-[4px] p-3.5 space-y-1.5">
+            <div key={msg.id} className="space-y-2 max-w-[92%] sm:max-w-[85%]">
+              {/* Tutor Message Card */}
+              <div className="bg-surface border border-hairline rounded-2xl rounded-tl-xs p-4 sm:p-5 space-y-2 shadow-xs">
+                {/* Header: Persona Name & Audio Controls */}
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#007AFF] dark:text-[#0A84FF]">
-                    {msg.mode === "practice"
-                      ? "Tutor · Offline Practice"
-                      : msg.mode === "preset"
-                      ? (apiConnected ? "Tutor · ✨ Gemini AI" : "Tutor · Scenario Starter")
-                      : `Tutor · ${msg.mode === "claude" ? "✨ Claude AI" : "✨ Gemini AI"}`}
+                  <span className="text-overline tracking-wider text-accent font-semibold">
+                    {scenario.role}
                   </span>
                   <div className="flex items-center gap-1">
                     <button
                       type="button"
                       onClick={() => speakSpanish(msg.spanish)}
-                      className="press-scale p-1.5 rounded-full bg-[#007AFF]/10 dark:bg-[#0A84FF]/15 text-[#007AFF] dark:text-[#0A84FF] cursor-pointer"
+                      aria-label="Listen to message"
+                      className="press-scale p-1.5 rounded-xl text-muted hover:text-primary hover:bg-subtle cursor-pointer transition-colors"
                       title="Listen"
                     >
-                      <Icon name="volume" className="w-3.5 h-3.5" />
+                      <Icon name="volume" className="w-4 h-4" />
                     </button>
                     <button
                       type="button"
                       onClick={() => speakSpanish(msg.spanish, { slow: true })}
-                      className="press-scale px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-[10px] font-bold text-[#1D1D1F] dark:text-[#F5F5F7] cursor-pointer"
-                      title="Slow audio"
+                      aria-label="Listen to message slowly"
+                      className="press-scale px-2 py-1 rounded-xl bg-subtle text-caption font-medium text-muted hover:text-primary cursor-pointer transition-colors"
+                      title="Listen at 0.7x speed"
                     >
-                      0.7x
+                      0.7×
                     </button>
                   </div>
                 </div>
 
-                <p className="text-base font-bold text-[#1D1D1F] dark:text-[#F5F5F7] leading-snug">{msg.spanish}</p>
+                {/* Foreign Speech Text */}
+                <p className="text-body font-medium text-primary leading-relaxed">
+                  {msg.spanish}
+                </p>
 
-                {/* Hidden by default: Expandable Translation & Pronunciation */}
+                {/* Inline Grammar Correction Annotation (if student made a mistake) */}
+                {msg.correction && msg.correction.has_mistake && (
+                  <div className="mt-3 p-3 rounded-xl bg-subtle border border-hairline space-y-1">
+                    <div className="flex items-center justify-between text-caption">
+                      <span className="text-overline tracking-wider text-muted font-semibold">
+                        Correction Tip
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => speakSpanish(msg.correction.corrected_spanish)}
+                        aria-label="Listen to correction"
+                        className="press-scale inline-flex items-center gap-1 text-caption text-accent font-medium hover:underline cursor-pointer"
+                      >
+                        <Icon name="volume" className="w-3 h-3" />
+                        <span>Hear</span>
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap items-baseline gap-1.5 pt-0.5 text-caption">
+                      <span className="line-through text-muted">{msg.correction.original}</span>
+                      <span className="text-muted">→</span>
+                      <span className="text-primary font-semibold">
+                        {msg.correction.corrected_spanish}
+                      </span>
+                    </div>
+                    {msg.correction.explanation && (
+                      <p className="text-status-warning text-caption leading-relaxed pt-0.5">
+                        {msg.correction.explanation}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Translation & Phonetic Guide Toggle */}
                 {revealedIds[msg.id] ? (
-                  <div className="pt-2 space-y-1.5 border-t border-black/[0.06] dark:border-white/[0.08] mt-2">
+                  <div className="pt-2 space-y-1.5 border-t border-hairline mt-2">
                     {msg.pronunciation && (
-                      <div className="flex items-center gap-1.5 text-xs font-mono font-medium text-[#007AFF] dark:text-[#64D2FF] bg-[#007AFF]/[0.06] dark:bg-[#0A84FF]/15 px-2.5 py-1.5 rounded-xl">
-                        <span className="text-[11px] opacity-70">🗣️</span>
+                      <div className="flex items-center gap-2 text-caption font-mono text-muted bg-subtle px-3 py-1.5 rounded-xl">
                         <span>{msg.pronunciation}</span>
                       </div>
                     )}
 
                     {msg.english && (
-                      <p className="text-xs text-[#545456] dark:text-[#D1D1D6] font-medium leading-relaxed px-0.5">
+                      <p className="text-caption text-muted leading-relaxed px-0.5">
                         {msg.english}
                       </p>
                     )}
@@ -404,9 +437,9 @@ Respond ONLY with raw JSON (no markdown):
                     <button
                       type="button"
                       onClick={() => toggleReveal(msg.id)}
-                      className="press-scale inline-flex items-center gap-1 text-[10px] font-bold text-[#86868B] dark:text-[#A1A1A6] hover:text-[#1D1D1F] dark:hover:text-white pt-0.5 cursor-pointer select-none"
+                      className="press-scale inline-flex items-center gap-1 text-caption font-medium text-muted hover:text-primary pt-1 cursor-pointer select-none"
                     >
-                      <Icon name="chevron-up" className="w-2.5 h-2.5" />
+                      <Icon name="chevron-up" className="w-3 h-3" />
                       <span>Hide translation</span>
                     </button>
                   </div>
@@ -415,10 +448,10 @@ Respond ONLY with raw JSON (no markdown):
                     <button
                       type="button"
                       onClick={() => toggleReveal(msg.id)}
-                      className="press-scale inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/[0.04] dark:bg-white/[0.08] hover:bg-black/[0.07] dark:hover:bg-white/[0.14] text-[11px] font-semibold text-[#007AFF] dark:text-[#0A84FF] cursor-pointer select-none transition-colors"
+                      className="press-scale inline-flex items-center gap-1 text-caption font-medium text-muted hover:text-primary cursor-pointer select-none"
                       title="Show pronunciation & English translation"
                     >
-                      <Icon name="chevron-down" className="w-3 h-3 text-[#007AFF] dark:text-[#0A84FF]" />
+                      <Icon name="chevron-down" className="w-3 h-3" />
                       <span>Translate</span>
                     </button>
                   </div>
@@ -428,52 +461,58 @@ Respond ONLY with raw JSON (no markdown):
           );
         })}
 
+        {/* Thoughtful Skeleton Loader when Tutor is thinking */}
         {isLoading && (
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white dark:bg-[#16161A] border border-black/[0.06] dark:border-white/[0.08] text-xs font-medium text-[#86868B] dark:text-[#A1A1A6]">
-            <span className="w-2 h-2 rounded-full bg-[#007AFF] dark:bg-[#0A84FF] animate-ping" />
-            Tutor is thinking…
+          <div className="flex items-center gap-2 p-3.5 max-w-[200px] rounded-2xl rounded-tl-xs bg-surface border border-hairline text-caption text-muted">
+            <span className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse [animation-delay:200ms]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse [animation-delay:400ms]" />
+            </span>
+            <span>Tutor is thinking…</span>
           </div>
         )}
+
         <div ref={endRef} />
       </div>
 
-      {/* Mobile Floating Input Bar */}
-      <div className="space-y-2 sticky bottom-0 bg-[#F5F5F7] dark:bg-black pt-1">
+      {/* Floating Bottom Input Bar */}
+      <div className="space-y-2 sticky bottom-0 bg-canvas/80 backdrop-blur-md pt-2 pb-1">
         {speechError && (
-          <div className="text-[11px] text-[#FF3B30] dark:text-[#FF453A] bg-[#FF3B30]/10 px-3 py-1 rounded-xl">
+          <div className="text-caption text-status-error bg-status-error/10 px-3.5 py-1.5 rounded-xl border border-status-error/20">
             {speechError}
           </div>
         )}
 
         {isListening && (
-          <div className="p-2.5 rounded-2xl bg-[#007AFF]/10 dark:bg-[#0A84FF]/15 border border-[#007AFF]/30 flex items-center justify-between animate-pulse">
+          <div className="p-3 rounded-2xl bg-subtle border border-hairline flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#007AFF] dark:bg-[#0A84FF] animate-ping" />
-              <span className="text-xs font-bold text-[#007AFF] dark:text-[#64D2FF]">
+              <span className="w-2 h-2 rounded-full bg-status-error animate-ping" />
+              <span className="text-caption font-medium text-primary">
                 {interimText ? `"${interimText}"` : `Listening in ${langName}… speak now`}
               </span>
             </div>
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={stopVoiceInput}
-              className="press-scale text-xs font-bold text-[#007AFF] dark:text-[#0A84FF] px-2 py-0.5 rounded-full bg-white dark:bg-black shadow-xs"
             >
               Done
-            </button>
+            </Button>
           </div>
         )}
 
         {/* Dynamic Suggested Replies */}
         {latestSuggestions.length > 0 && !isListening && (
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
             {latestSuggestions.map((s, idx) => (
               <button
                 key={idx}
                 type="button"
                 onClick={() => sendMessage(s)}
-                className="press-scale whitespace-nowrap px-3 py-1 rounded-full bg-white dark:bg-[#111114] border border-black/10 dark:border-white/[0.12] text-xs font-medium text-[#1D1D1F] dark:text-[#F5F5F7] hover:border-[#007AFF] hover:text-[#007AFF] shadow-xs cursor-pointer"
+                className="press-scale whitespace-nowrap min-h-[44px] px-3.5 py-1.5 rounded-full bg-surface border border-hairline text-caption font-medium text-primary hover:border-accent hover:text-accent shadow-xs cursor-pointer select-none transition-colors"
               >
-                💬 {s}
+                {s}
               </button>
             ))}
           </div>
@@ -485,15 +524,16 @@ Respond ONLY with raw JSON (no markdown):
             e.preventDefault();
             sendMessage();
           }}
-          className="flex items-center gap-2 p-1.5 rounded-[24px] bg-white dark:bg-[#111114] border border-black/[0.08] dark:border-white/[0.12] shadow-sm"
+          className="flex items-center gap-2 p-1.5 rounded-2xl bg-surface border border-hairline shadow-xs"
         >
           <button
             type="button"
             onClick={isListening ? stopVoiceInput : startVoiceInput}
-            className={`press-scale w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+            aria-label={isListening ? "Stop listening" : `Speak in ${langName}`}
+            className={`press-scale w-11 h-11 min-h-[44px] min-w-[44px] rounded-xl flex items-center justify-center transition-colors cursor-pointer ${
               isListening
-                ? "bg-[#FF3B30] text-white shadow-md"
-                : "bg-black/5 dark:bg-white/10 text-[#1D1D1F] dark:text-[#F5F5F7] hover:bg-black/10 dark:hover:bg-white/15"
+                ? "bg-status-error text-white"
+                : "text-muted hover:text-primary hover:bg-subtle"
             }`}
             title={isListening ? "Stop listening" : `Speak in ${langName}`}
           >
@@ -505,21 +545,19 @@ Respond ONLY with raw JSON (no markdown):
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={`Type or speak in ${langName}…`}
-            className="flex-1 bg-transparent px-2 text-sm text-[#1D1D1F] dark:text-[#F5F5F7] placeholder-[#86868B] focus:outline-none"
+            className="flex-1 bg-transparent px-2 text-body text-primary placeholder:text-muted focus:outline-none"
           />
 
-          <button
+          <Button
             type="submit"
+            variant="primary"
+            size="icon"
             disabled={!input.trim() || isLoading}
-            className={`press-scale w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-              input.trim() && !isLoading
-                ? "bg-[#007AFF] dark:bg-[#0A84FF] text-white cursor-pointer shadow-xs"
-                : "bg-black/5 dark:bg-white/10 text-[#C7C7CC] dark:text-[#48484A] cursor-not-allowed"
-            }`}
-            title="Send"
+            ariaLabel="Send message"
+            className="rounded-xl shrink-0"
           >
-            <Icon name="send" className="w-5 h-5" />
-          </button>
+            <Icon name="send" className="w-4 h-4" />
+          </Button>
         </form>
       </div>
     </div>

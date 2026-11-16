@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Icon from "./Icon";
+import { Sheet, Button, Input, Card, Avatar } from "./ui";
 import { supabase, isSupabaseConfigured } from "../services/supabase";
 
 export default function AuthBottomSheet({
@@ -8,7 +9,7 @@ export default function AuthBottomSheet({
   streakCount = 0,
   activeDaysCount = 0,
   learnedCount = 0,
-  theme = "amoled",
+  theme = "system",
   onToggleTheme,
   onOpenLearnedWords,
   onOpenSettings,
@@ -22,8 +23,6 @@ export default function AuthBottomSheet({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-
-  const isDark = theme !== "light";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -52,7 +51,7 @@ export default function AuthBottomSheet({
         });
         if (signUpErr) throw signUpErr;
         if (data.user && !data.session) {
-          setNotice("Account created! Check your email inbox to confirm, then sign in.");
+          setNotice("Account created. Check your inbox to confirm, then sign in.");
           setMode("signin");
         } else {
           onClose();
@@ -72,270 +71,213 @@ export default function AuthBottomSheet({
     }
   };
 
-  const avatarInitial = user?.email?.[0]?.toUpperCase() || null;
-
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="w-full max-w-md bg-white dark:bg-[#0D0D10] dark:border dark:border-white/[0.10] rounded-t-[28px] sm:rounded-3xl p-5 space-y-4 max-h-[88vh] overflow-y-auto shadow-2xl">
-        <div className="w-10 h-1 bg-black/20 dark:bg-white/20 rounded-full mx-auto mb-1 sm:hidden" />
-
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-xl bg-[#007AFF]/10 dark:bg-[#0A84FF]/20 text-[#007AFF] dark:text-[#0A84FF] flex items-center justify-center text-xs font-black">
-              {avatarInitial || <Icon name="user" className="w-4 h-4" />}
-            </div>
-            <h2 className="text-base font-black text-[#1D1D1F] dark:text-[#F5F5F7]">
-              Profile
-            </h2>
+    <Sheet
+      isOpen={true}
+      onClose={onClose}
+      title="Profile"
+      actionButton={
+        <Button variant="ghost" size="sm" onClick={onClose}>
+          Done
+        </Button>
+      }
+    >
+      <div className="space-y-6 pt-2">
+        {/* User Summary Header */}
+        <div className="flex items-center gap-3.5">
+          <Avatar
+            name={user?.email || "Guest User"}
+            icon={user ? null : <Icon name="user" className="w-5 h-5" />}
+            size="lg"
+          />
+          <div className="min-w-0">
+            <h3 className="text-headline font-semibold text-primary truncate">
+              {user ? user.email.split("@")[0] : "Guest Learner"}
+            </h3>
+            <p className="text-caption text-muted truncate">
+              {user ? user.email : "Local practice mode"}
+            </p>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-xs font-bold text-[#007AFF] dark:text-[#0A84FF] cursor-pointer"
-          >
-            Done
-          </button>
         </div>
 
-        {/* Account & Cloud Sync Section */}
+        {/* Learning Stats 3-Column Strip */}
+        <div className="grid grid-cols-3 gap-2">
+          <Card className="p-3 text-center">
+            <span className="text-display font-semibold text-primary block leading-tight">
+              {streakCount}
+            </span>
+            <span className="text-overline text-muted uppercase tracking-wide">
+              Day Streak
+            </span>
+          </Card>
+          <Card className="p-3 text-center">
+            <span className="text-display font-semibold text-primary block leading-tight">
+              {activeDaysCount}
+            </span>
+            <span className="text-overline text-muted uppercase tracking-wide">
+              Active Days
+            </span>
+          </Card>
+          <Card
+            interactive
+            onClick={onOpenLearnedWords}
+            className="p-3 text-center cursor-pointer"
+          >
+            <span className="text-display font-semibold text-accent block leading-tight">
+              {learnedCount}
+            </span>
+            <span className="text-overline text-muted uppercase tracking-wide">
+              Words
+            </span>
+          </Card>
+        </div>
+
+        {/* Supabase Account & Cloud Sync */}
         {!isSupabaseConfigured ? (
-          <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-500/15 border border-amber-200 dark:border-amber-500/25 text-xs text-amber-900 dark:text-amber-200 leading-relaxed">
-            Supabase environment variables are missing. Add `VITE_SUPABASE_URL` and
-            `VITE_SUPABASE_PUBLISHABLE_KEY` to `.env` and restart the app.
-          </div>
+          <Card className="p-4 bg-status-warning/10 text-status-warning text-caption space-y-1">
+            <p className="font-semibold">Supabase sync not configured</p>
+            <p className="text-overline">
+              Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY to enable cloud sync.
+            </p>
+          </Card>
         ) : user ? (
-          <div className="space-y-3">
-            <div className="p-4 rounded-2xl bg-[#F5F5F7] dark:bg-[#16161A] border border-black/[0.06] dark:border-white/[0.08] flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-[#34C759] shadow-[0_0_6px_#34C759]" />
-                  <span className="text-xs font-black text-[#1D1D1F] dark:text-[#F5F5F7]">
-                    Cloud Sync Active
-                  </span>
-                </div>
-                <p className="text-xs text-[#86868B] dark:text-[#A1A1A6] font-medium truncate mt-0.5">
-                  {user.email}
-                </p>
+          <Card className="p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-status-success" />
+                <span className="text-caption font-semibold text-primary">
+                  Cloud Sync Active
+                </span>
               </div>
-              <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-white dark:bg-white/[0.08] border border-black/[0.06] dark:border-white/[0.08] text-[#1D1D1F] dark:text-[#F5F5F7] shrink-0">
-                {syncStatus === "syncing" ? "Syncing..." : "Synced"}
+              <span className="text-overline text-muted uppercase">
+                {syncStatus === "syncing" ? "Syncing…" : "Synced"}
               </span>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
+            <div className="flex gap-2 pt-1">
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={onForceSync}
                 disabled={syncStatus === "syncing"}
-                className="press-scale flex-1 py-2.5 rounded-2xl bg-[#007AFF]/10 dark:bg-[#0A84FF]/15 text-[#007AFF] dark:text-[#0A84FF] text-xs font-bold cursor-pointer hover:bg-[#007AFF]/15"
+                className="flex-1"
               >
-                {syncStatus === "syncing" ? "Syncing..." : "Sync Now"}
-              </button>
-              <button
-                type="button"
+                {syncStatus === "syncing" ? "Syncing…" : "Sync Now"}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={async () => {
                   await onSignOut();
                   onClose();
                 }}
-                className="press-scale flex-1 py-2.5 rounded-2xl bg-[#FF3B30]/10 dark:bg-[#FF453A]/15 text-[#FF3B30] dark:text-[#FF453A] text-xs font-bold cursor-pointer hover:bg-[#FF3B30]/15"
+                className="flex-1 text-status-error hover:bg-status-error/10"
               >
                 Sign Out
-              </button>
+              </Button>
             </div>
-          </div>
+          </Card>
         ) : (
-          <div className="p-3.5 rounded-2xl bg-[#F5F5F7] dark:bg-[#16161A] border border-black/[0.06] dark:border-white/[0.08] space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-black text-[#1D1D1F] dark:text-[#F5F5F7]">
-                ☁️ Sign In to Sync Progress
-              </span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-[#86868B] dark:text-[#A1A1A6]">
-                Guest Mode
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-white dark:bg-black/60 border border-black/[0.05] dark:border-white/[0.06]">
-              <button
-                type="button"
-                onClick={() => {
-                  setMode("signin");
-                  setError("");
-                }}
-                className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  mode === "signin"
-                    ? "bg-[#1D1D1F] dark:bg-white text-white dark:text-black shadow-xs"
-                    : "text-[#86868B] dark:text-[#A1A1A6]"
-                }`}
-              >
-                Sign In
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setMode("signup");
-                  setError("");
-                }}
-                className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  mode === "signup"
-                    ? "bg-[#1D1D1F] dark:bg-white text-white dark:text-black shadow-xs"
-                    : "text-[#86868B] dark:text-[#A1A1A6]"
-                }`}
-              >
-                Create Account
-              </button>
+          <Card className="p-5 space-y-4">
+            <div className="space-y-1">
+              <h4 className="text-headline font-semibold text-primary">
+                {mode === "signin" ? "Sign In to Yappi" : "Create Account"}
+              </h4>
+              <p className="text-caption text-muted">
+                Sync your streak, custom decks, and learned words across devices
+              </p>
             </div>
 
             {error && (
-              <div className="p-2.5 rounded-xl bg-red-50 dark:bg-red-500/15 border border-red-200 dark:border-red-500/25 text-xs font-semibold text-red-700 dark:text-red-300">
+              <div className="p-3 rounded-xl bg-status-error/10 text-status-error text-caption font-medium">
                 {error}
               </div>
             )}
             {notice && (
-              <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-500/15 border border-emerald-200 dark:border-emerald-500/25 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+              <div className="p-3 rounded-xl bg-accent/10 text-accent text-caption font-medium">
                 {notice}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-2.5">
-              <input
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <Input
+                label="Email"
                 type="email"
-                required
-                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email address"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-black border border-black/[0.08] dark:border-white/[0.12] text-sm text-[#1D1D1F] dark:text-[#F5F5F7] placeholder-[#86868B] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/40"
-              />
-
-              <input
-                type="password"
+                placeholder="you@example.com"
                 required
-                minLength={6}
-                autoComplete={mode === "signup" ? "new-password" : "current-password"}
+              />
+              <Input
+                label="Password"
+                type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password (6+ characters)"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-black border border-black/[0.08] dark:border-white/[0.12] text-sm text-[#1D1D1F] dark:text-[#F5F5F7] placeholder-[#86868B] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/40"
+                placeholder="••••••••"
+                required
               />
 
-              <button
+              <Button
                 type="submit"
-                disabled={loading}
-                className="press-scale w-full py-2.5 rounded-xl bg-[#007AFF] dark:bg-[#0A84FF] text-white text-xs font-bold shadow-xs cursor-pointer disabled:opacity-60"
+                variant="primary"
+                loading={loading}
+                className="w-full mt-2"
               >
-                {loading
-                  ? mode === "signup"
-                    ? "Creating Account..."
-                    : "Signing In..."
-                  : mode === "signup"
-                  ? "Create Account & Sync"
-                  : "Sign In & Sync"}
-              </button>
+                {mode === "signin" ? "Sign In" : "Create Account"}
+              </Button>
             </form>
 
-            <p className="text-[11px] text-[#86868B] dark:text-[#A1A1A6] text-center leading-snug">
-              Local progress merges automatically when you sign in.
-            </p>
-          </div>
+            <div className="text-center pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setMode(mode === "signin" ? "signup" : "signin");
+                  setError("");
+                  setNotice("");
+                }}
+                className="text-caption text-accent hover:underline cursor-pointer"
+              >
+                {mode === "signin"
+                  ? "Don't have an account? Sign up"
+                  : "Already have an account? Sign in"}
+              </button>
+            </div>
+          </Card>
         )}
 
-        {/* Learning Progress Cards: Streak & Learned Words */}
-        <div className="grid grid-cols-2 gap-2.5">
-          <div className="p-3.5 rounded-2xl bg-[#FF9600]/[0.08] dark:bg-[#FF9F0A]/15 border border-[#FF9600]/25 space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="text-lg leading-none">🔥</span>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#FF9600]">
-                Streak
-              </span>
-            </div>
-            <div className="text-xl font-black text-[#1D1D1F] dark:text-[#F5F5F7] leading-tight pt-1">
-              {streakCount} {streakCount === 1 ? "Day" : "Days"}
-            </div>
-            <div className="text-[11px] font-medium text-[#86868B] dark:text-[#A1A1A6]">
-              {activeDaysCount > 0
-                ? `${activeDaysCount} active ${activeDaysCount === 1 ? "day" : "days"} recently`
-                : "Practice daily to build"}
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={onOpenLearnedWords}
-            className="press-scale p-3.5 rounded-2xl bg-[#58CC02]/[0.08] dark:bg-[#58CC02]/15 border border-[#58CC02]/25 space-y-1 text-left cursor-pointer hover:border-[#58CC02]/60 transition-colors"
+        {/* Quick Links */}
+        <div className="space-y-2 pt-2 border-t border-hairline">
+          <Card
+            interactive
+            onClick={() => {
+              onClose();
+              onOpenLearnedWords?.();
+            }}
+            className="p-3.5 flex items-center justify-between"
           >
-            <div className="flex items-center justify-between">
-              <span className="w-5 h-5 rounded-full bg-[#58CC02] text-white text-[11px] font-black flex items-center justify-center">
-                ✓
-              </span>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#58CC02]">
-                Learned
-              </span>
+            <div className="flex items-center gap-2.5">
+              <Icon name="check" className="w-4 h-4 text-status-success" />
+              <span className="text-body font-medium text-primary">Learned Vocabulary</span>
             </div>
-            <div className="text-xl font-black text-[#1D1D1F] dark:text-[#F5F5F7] leading-tight pt-1">
-              {learnedCount} {learnedCount === 1 ? "Word" : "Words"}
-            </div>
-            <div className="text-[11px] font-semibold text-[#58CC02] flex items-center gap-1">
-              <span>View deck list</span>
-              <span>&rarr;</span>
-            </div>
-          </button>
-        </div>
+            <span className="text-caption text-muted">{learnedCount} words →</span>
+          </Card>
 
-        {/* Menu Options: AMOLED Dark Mode Toggle & Settings */}
-        <div className="rounded-2xl bg-[#F5F5F7] dark:bg-[#16161A] border border-black/[0.06] dark:border-white/[0.08] divide-y divide-black/[0.06] dark:divide-white/[0.08] overflow-hidden">
-          {onToggleTheme && (
-            <button
-              type="button"
-              onClick={onToggleTheme}
-              className="w-full p-3.5 flex items-center justify-between text-left hover:bg-black/[0.03] dark:hover:bg-white/[0.04] transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-white dark:bg-black border border-black/[0.06] dark:border-white/[0.10] flex items-center justify-center text-base shadow-xs">
-                  {isDark ? "🌑" : "☀️"}
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-[#1D1D1F] dark:text-[#F5F5F7]">
-                    AMOLED Dark Mode
-                  </div>
-                  <div className="text-[11px] text-[#86868B] dark:text-[#A1A1A6]">
-                    {isDark ? "Pure black OLED contrast" : "Classic light appearance"}
-                  </div>
-                </div>
-              </div>
-              <span
-                className={`w-11 h-6 rounded-full p-0.5 transition-colors flex items-center ${
-                  isDark ? "bg-[#34C759] justify-end" : "bg-black/15 justify-start"
-                }`}
-              >
-                <span className="w-5 h-5 rounded-full bg-white shadow-xs" />
-              </span>
-            </button>
-          )}
-
-          {onOpenSettings && (
-            <button
-              type="button"
-              onClick={onOpenSettings}
-              className="w-full p-3.5 flex items-center justify-between text-left hover:bg-black/[0.03] dark:hover:bg-white/[0.04] transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-white dark:bg-black border border-black/[0.06] dark:border-white/[0.10] flex items-center justify-center text-[#86868B] dark:text-[#F5F5F7] shadow-xs">
-                  <Icon name="settings" className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-[#1D1D1F] dark:text-[#F5F5F7]">
-                    Settings
-                  </div>
-                  <div className="text-[11px] text-[#86868B] dark:text-[#A1A1A6]">
-                    Language course, AI model, neural voice & speed
-                  </div>
-                </div>
-              </div>
-              <Icon name="arrowRight" className="w-4 h-4 text-[#86868B] dark:text-[#A1A1A6]" />
-            </button>
-          )}
+          <Card
+            interactive
+            onClick={() => {
+              onClose();
+              onOpenSettings?.();
+            }}
+            className="p-3.5 flex items-center justify-between"
+          >
+            <div className="flex items-center gap-2.5">
+              <Icon name="settings" className="w-4 h-4 text-muted" />
+              <span className="text-body font-medium text-primary">App Preferences</span>
+            </div>
+            <Icon name="arrowRight" className="w-4 h-4 text-muted" />
+          </Card>
         </div>
       </div>
-    </div>
+    </Sheet>
   );
 }

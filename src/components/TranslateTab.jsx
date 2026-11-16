@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import Icon from "./Icon";
+import { Chip, Button, Card } from "./ui";
 import { callAI, extractJson, buildFallbackTranslation } from "../services/gemini";
+import { triggerHaptic } from "../utils/haptics";
 
 /* ============================================================================
- * TAB 4: TRANSLATE — Phone-First Apple Translate Experience
+ * TAB 4: TRANSLATE — Phone-First Apple Translate Minimal Experience
  * ========================================================================== */
 export default function TranslateTab({
   language = "es",
@@ -71,6 +73,7 @@ Respond ONLY with raw JSON:
   };
 
   const handleSwap = () => {
+    triggerHaptic("selection");
     if (direction === "auto") setDirection("target-to-en");
     else if (direction === "target-to-en") setDirection("en-to-target");
     else setDirection("auto");
@@ -99,10 +102,22 @@ Respond ONLY with raw JSON:
         ];
 
   return (
-    <div className="space-y-4">
-      {/* Direction Header Bar */}
-      <div className="flex items-center justify-between p-2 rounded-2xl bg-white dark:bg-[#0D0D10] border border-black/[0.08] dark:border-white/[0.10] shadow-xs">
-        <span className="text-xs font-bold text-[#1D1D1F] dark:text-[#F5F5F7] px-2">
+    <div className="flex-1 flex flex-col space-y-6 pb-24 animate-fade-in">
+      {/* Title Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-display font-semibold tracking-tight text-primary">
+            Translate
+          </h1>
+          <p className="text-caption text-muted mt-0.5">
+            Natural translation with pronunciation and word-by-word grammar breakdown
+          </p>
+        </div>
+      </div>
+
+      {/* Language Direction Segment Bar */}
+      <div className="flex items-center justify-between p-1.5 rounded-2xl bg-surface border border-hairline shadow-xs">
+        <span className="text-caption font-semibold text-primary px-3 py-1">
           {direction === "auto"
             ? "Auto Detect"
             : direction === "target-to-en"
@@ -113,13 +128,14 @@ Respond ONLY with raw JSON:
         <button
           type="button"
           onClick={handleSwap}
-          className="press-scale p-1.5 rounded-xl bg-[#F5F5F7] dark:bg-[#16161A] text-[#007AFF] dark:text-[#0A84FF] hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer flex items-center gap-1 text-xs font-bold"
+          aria-label="Switch translation direction"
+          className="press-scale min-h-[44px] px-3.5 rounded-xl bg-subtle text-accent hover:bg-muted cursor-pointer inline-flex items-center gap-1.5 text-caption font-semibold transition-colors"
         >
           <Icon name="swap" className="w-4 h-4" />
           <span>Switch</span>
         </button>
 
-        <span className="text-xs font-bold text-[#1D1D1F] dark:text-[#F5F5F7] px-2">
+        <span className="text-caption font-semibold text-primary px-3 py-1">
           {direction === "auto"
             ? `English / ${langName}`
             : direction === "target-to-en"
@@ -129,201 +145,206 @@ Respond ONLY with raw JSON:
       </div>
 
       {/* Input Translation Box */}
-      <div className="material-card rounded-3xl p-4 space-y-3">
+      <Card className="p-5 space-y-4">
         <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder={`Enter English or ${langName} text to translate…`}
           rows={3}
-          className="w-full bg-transparent text-base text-[#1D1D1F] dark:text-[#F5F5F7] placeholder-[#86868B] focus:outline-none resize-none font-medium leading-relaxed"
+          className="w-full bg-transparent text-body font-normal text-primary placeholder:text-muted focus:outline-none resize-none leading-relaxed"
         />
 
-        <div className="flex items-center justify-between pt-1 border-t border-black/[0.05] dark:border-white/[0.08]">
-          <div className="text-[11px] text-[#86868B] dark:text-[#A1A1A6]">
+        <div className="flex items-center justify-between pt-3 border-t border-hairline">
+          <span className="text-overline text-muted">
             {input.trim().length} characters
-          </div>
+          </span>
           <div className="flex items-center gap-2">
             {input && (
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setInput("")}
-                className="text-xs text-[#86868B] dark:text-[#A1A1A6] hover:text-[#1D1D1F] dark:hover:text-white cursor-pointer"
               >
                 Clear
-              </button>
+              </Button>
             )}
-            <button
-              type="button"
+            <Button
+              variant="primary"
+              size="sm"
               onClick={() => runTranslate()}
               disabled={!input.trim() || isLoading}
-              className={`press-scale px-4 py-2 rounded-full text-xs font-bold transition-all ${
-                input.trim() && !isLoading
-                  ? "bg-[#007AFF] dark:bg-[#0A84FF] text-white shadow-xs cursor-pointer"
-                  : "bg-black/5 dark:bg-white/10 text-[#C7C7CC] dark:text-[#48484A] cursor-not-allowed"
-              }`}
+              loading={isLoading}
             >
               {isLoading ? "Translating…" : "Translate"}
-            </button>
+            </Button>
           </div>
         </div>
-      </div>
+      </Card>
 
-      {/* Quick Starters */}
+      {/* Quick Starter Chips */}
       {!result && (
-        <div className="space-y-1.5">
-          <div className="text-xs font-bold text-[#86868B] dark:text-[#A1A1A6] uppercase tracking-wider px-1">
+        <section className="space-y-3">
+          <h2 className="text-overline font-semibold uppercase tracking-wider text-muted">
             Quick Examples
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {quickStarters.map((qs, i) => (
-              <button
+              <Card
                 key={i}
-                type="button"
-                onClick={() => runTranslate(qs)}
-                className="press-scale p-3 rounded-2xl material-card text-left text-xs font-medium text-[#1D1D1F] dark:text-[#F5F5F7] hover:border-[#007AFF] dark:hover:border-[#0A84FF] cursor-pointer"
+                interactive
+                onClick={() => {
+                  triggerHaptic("selection");
+                  runTranslate(qs);
+                }}
+                className="p-3.5 text-left text-caption font-medium text-primary hover:border-accent/40"
               >
                 {qs}
-              </button>
+              </Card>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       {/* Result Display Card */}
       {result && (
-        <div className="space-y-3 animate-fadeIn">
-          {/* Target Language Card */}
-          <div className="material-card rounded-3xl p-4 space-y-3">
+        <div className="space-y-4 animate-fade-in">
+          {/* Main Translation Output Card */}
+          <Card className="p-5 sm:p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#007AFF] dark:text-[#0A84FF]">
+              <span className="text-overline font-semibold uppercase tracking-wide text-accent">
                 {result.target_language || "Translation"}
               </span>
               <div className="flex items-center gap-1">
                 <button
                   type="button"
                   onClick={() => speakSpanish(result.spanish_text)}
-                  className="press-scale p-1.5 rounded-full bg-[#007AFF]/10 dark:bg-[#0A84FF]/15 text-[#007AFF] dark:text-[#0A84FF] cursor-pointer"
-                  title={`Listen ${langName}`}
+                  className="press-scale min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center text-muted hover:text-accent hover:bg-subtle cursor-pointer transition-colors"
+                  aria-label={`Listen in ${langName}`}
                 >
                   <Icon name="volume" className="w-4 h-4" />
                 </button>
                 <button
                   type="button"
                   onClick={() => speakSpanish(result.spanish_text, { slow: true })}
-                  className="press-scale px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-[10px] font-bold text-[#1D1D1F] dark:text-[#F5F5F7] cursor-pointer"
-                  title="Slow audio"
+                  className="press-scale px-2.5 py-1 rounded-full text-overline font-medium text-muted hover:text-primary hover:bg-subtle cursor-pointer transition-colors"
+                  aria-label="Listen at 0.7x slower speed"
                 >
-                  0.7x
+                  0.7×
                 </button>
               </div>
             </div>
 
-            <p className="text-xl font-bold text-[#1D1D1F] dark:text-[#F5F5F7] leading-snug">
+            <p className="text-display font-semibold text-primary leading-snug">
               {result.target_language === "English" ? result.english_text : result.spanish_text}
             </p>
 
             {result.pronunciation && (
-              <p className="text-xs font-mono font-medium text-[#007AFF] dark:text-[#64D2FF] bg-[#007AFF]/[0.06] dark:bg-[#0A84FF]/15 px-2.5 py-1.5 rounded-xl">
-                🗣️ {result.pronunciation}
-              </p>
+              <div className="p-3 rounded-xl bg-subtle text-caption font-mono text-muted">
+                {result.pronunciation}
+              </div>
             )}
 
-            <div className="pt-2 border-t border-black/[0.05] dark:border-white/[0.08]">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#86868B] dark:text-[#A1A1A6] block mb-0.5">
+            <div className="pt-3 border-t border-hairline">
+              <span className="text-overline font-semibold uppercase tracking-wide text-muted block mb-1">
                 {result.source_language || "Original"}
               </span>
-              <p className="text-xs text-[#86868B] dark:text-[#A1A1A6]">
+              <p className="text-caption text-muted">
                 {result.source_language === "English" ? result.english_text : result.spanish_text}
               </p>
             </div>
-          </div>
+          </Card>
 
           {/* Interactive Tokenized Word Breakdown */}
           {Array.isArray(result.tokens) && result.tokens.length > 0 && (
-            <div className="material-card rounded-3xl p-4 space-y-2.5">
-              <h3 className="text-xs font-bold text-[#86868B] dark:text-[#A1A1A6] uppercase tracking-wider">
+            <Card className="p-5 space-y-3">
+              <h3 className="text-overline font-semibold uppercase tracking-wider text-muted">
                 Grammar & Word Breakdown
               </h3>
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {result.tokens.map((tok, idx) => (
                   <div
                     key={idx}
-                    className="p-2.5 rounded-2xl bg-[#F5F5F7] dark:bg-[#16161A] border border-transparent dark:border-white/[0.06] flex items-center justify-between text-xs"
+                    className="p-3 rounded-xl bg-subtle border border-hairline flex items-center justify-between text-caption"
                   >
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-[#1D1D1F] dark:text-[#F5F5F7]">{tok.spanish}</span>
-                        <span className="text-[10px] font-mono text-[#007AFF] dark:text-[#64D2FF]">
-                          {tok.pronunciation}
-                        </span>
-                        <span className="px-1.5 py-0.5 rounded-md bg-white dark:bg-black text-[9px] font-semibold text-[#86868B] dark:text-[#A1A1A6]">
-                          {tok.pos}
-                        </span>
+                    <div className="space-y-0.5 min-w-0 pr-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-primary">{tok.spanish}</span>
+                        {tok.pronunciation && (
+                          <span className="text-overline font-mono text-muted">
+                            [{tok.pronunciation}]
+                          </span>
+                        )}
+                        {tok.pos && (
+                          <span className="px-1.5 py-0.5 rounded-md bg-surface text-overline font-medium text-muted border border-hairline">
+                            {tok.pos}
+                          </span>
+                        )}
                       </div>
-                      <div className="text-[11px] text-[#86868B] dark:text-[#A1A1A6]">
+                      <p className="text-caption text-muted">
                         → {tok.english} {tok.note ? `· ${tok.note}` : ""}
-                      </div>
+                      </p>
                     </div>
+
                     <button
                       type="button"
                       onClick={() => speakSpanish(tok.spanish)}
-                      className="p-1.5 text-[#007AFF] dark:text-[#0A84FF] hover:bg-white dark:hover:bg-white/10 rounded-full cursor-pointer"
-                      title="Pronounce word"
+                      className="press-scale min-w-[36px] min-h-[36px] rounded-full flex items-center justify-center text-muted hover:text-accent hover:bg-surface cursor-pointer shrink-0 transition-colors"
+                      aria-label={`Pronounce ${tok.spanish}`}
                     >
                       <Icon name="volume" className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 ))}
               </div>
-            </div>
+            </Card>
           )}
 
           {/* Grammar Takeaways */}
           {Array.isArray(result.grammar_notes) && result.grammar_notes.length > 0 && (
-            <div className="p-3.5 rounded-3xl bg-[#007AFF]/[0.06] dark:bg-[#0A84FF]/15 border border-[#007AFF]/15 dark:border-[#0A84FF]/25 space-y-1.5">
-              <span className="text-xs font-bold text-[#007AFF] dark:text-[#64D2FF] block">
-                💡 Key Grammar Notes
+            <Card className="p-4 bg-accent/5 border border-accent/20 space-y-2">
+              <span className="text-overline font-semibold uppercase tracking-wider text-accent block">
+                Grammar Takeaways
               </span>
-              <ul className="text-xs text-[#1D1D1F] dark:text-[#F5F5F7] space-y-1 list-disc list-inside">
+              <ul className="text-caption text-primary space-y-1.5 list-disc list-inside">
                 {result.grammar_notes.map((note, i) => (
                   <li key={i}>{note}</li>
                 ))}
               </ul>
-            </div>
+            </Card>
           )}
         </div>
       )}
 
       {/* Recent History List */}
       {recentTranslations.length > 0 && (
-        <div className="space-y-2 pt-2">
-          <h3 className="text-xs font-bold text-[#86868B] dark:text-[#A1A1A6] uppercase tracking-wider px-1">
+        <section className="space-y-3 pt-2">
+          <h2 className="text-overline font-semibold uppercase tracking-wider text-muted">
             Recent Translations
-          </h3>
-          <div className="space-y-1.5">
+          </h2>
+          <div className="grid grid-cols-1 gap-2">
             {recentTranslations.map((entry, idx) => (
-              <button
+              <Card
                 key={idx}
-                type="button"
+                interactive
                 onClick={() => {
                   setInput(entry.input);
                   setResult(entry.result);
                 }}
-                className="press-scale w-full p-3 rounded-2xl material-card text-left flex items-center justify-between cursor-pointer"
+                className="p-3.5 flex items-center justify-between gap-3 text-left"
               >
-                <div className="truncate pr-2">
-                  <div className="text-xs font-bold text-[#1D1D1F] dark:text-[#F5F5F7] truncate">
+                <div className="min-w-0 pr-2">
+                  <p className="text-body font-medium text-primary truncate">
                     {entry.result.spanish_text}
-                  </div>
-                  <div className="text-[11px] text-[#86868B] dark:text-[#A1A1A6] truncate">
+                  </p>
+                  <p className="text-caption text-muted truncate mt-0.5">
                     {entry.result.english_text}
-                  </div>
+                  </p>
                 </div>
-                <Icon name="arrowRight" className="w-3.5 h-3.5 text-[#86868B] dark:text-[#A1A1A6] shrink-0" />
-              </button>
+                <Icon name="arrowRight" className="w-4 h-4 text-muted shrink-0" />
+              </Card>
             ))}
           </div>
-        </div>
+        </section>
       )}
     </div>
   );

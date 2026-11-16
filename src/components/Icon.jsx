@@ -1,12 +1,12 @@
 import React from "react";
 
 // Crisp inline SVG icons for mobile
-export default function Icon({ name, className = "w-5 h-5", filled = false }) {
+export default function Icon({ name, className = "w-5 h-5", filled = false, strokeWidth = "1.75" }) {
   const props = {
     viewBox: "0 0 24 24",
     fill: "none",
     stroke: "currentColor",
-    strokeWidth: "2",
+    strokeWidth,
     strokeLinecap: "round",
     strokeLinejoin: "round",
     className,
@@ -177,6 +177,15 @@ export default function Icon({ name, className = "w-5 h-5", filled = false }) {
         <svg {...props}>
           <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
           <circle cx="12" cy="7" r="4" />
+        </svg>
+      );
+    case "refresh":
+      return (
+        <svg {...props}>
+          <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+          <path d="M3 3v5h5" />
+          <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+          <path d="M16 21h5v-5" />
         </svg>
       );
     default:

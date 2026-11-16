@@ -1,67 +1,83 @@
 import React from "react";
 import Icon from "./Icon";
+import { Sheet, Button, Card } from "./ui";
 
 /* ============================================================================
- * BOTTOM SHEET: Learned Words Sheet
+ * BOTTOM SHEET: Learned Words Vocabulary History
  * ========================================================================== */
-export default function LearnedWordsBottomSheet({ learnedWords, speakSpanish, onRemove, onClose }) {
-  const list = Object.values(learnedWords).sort((a, b) => (b.learnedAt || 0) - (a.learnedAt || 0));
+export default function LearnedWordsBottomSheet({
+  learnedWords = {},
+  speakSpanish,
+  onRemove,
+  onClose,
+}) {
+  const list = Object.values(learnedWords).sort(
+    (a, b) => (b.learnedAt || 0) - (a.learnedAt || 0)
+  );
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="w-full max-w-md bg-white dark:bg-[#0D0D10] dark:border dark:border-white/[0.10] rounded-t-[28px] sm:rounded-3xl p-5 space-y-3 max-h-[80vh] overflow-y-auto shadow-2xl">
-        <div className="w-10 h-1 bg-black/20 dark:bg-white/20 rounded-full mx-auto mb-1 sm:hidden" />
-
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-bold text-[#1D1D1F] dark:text-[#F5F5F7]">
-            Learned Words ({list.length})
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-xs font-bold text-[#007AFF] dark:text-[#0A84FF] cursor-pointer"
-          >
-            Done
-          </button>
-        </div>
-
+    <Sheet
+      isOpen={true}
+      onClose={onClose}
+      title={`Learned Words (${list.length})`}
+      actionButton={
+        <Button variant="ghost" size="sm" onClick={onClose}>
+          Done
+        </Button>
+      }
+    >
+      <div className="space-y-4 pt-2">
         {list.length === 0 ? (
-          <p className="text-xs text-[#86868B] dark:text-[#A1A1A6] py-6 text-center">
-            No words marked learned yet. Head to <strong>Vocab</strong> and tap{" "}
-            <strong>Mark Learned</strong>!
-          </p>
+          <Card className="py-12 text-center p-6 space-y-2">
+            <div className="w-12 h-12 mx-auto rounded-full bg-subtle flex items-center justify-center text-muted">
+              <Icon name="check" className="w-5 h-5" />
+            </div>
+            <h3 className="text-headline font-semibold text-primary">
+              No words marked learned yet
+            </h3>
+            <p className="text-caption text-muted max-w-xs mx-auto">
+              Flip flashcards in the Vocab tab and tap "Mark Learned" to save words here for active review.
+            </p>
+          </Card>
         ) : (
-          <div className="space-y-1.5">
+          <div className="grid grid-cols-1 gap-2 max-h-[60vh] overflow-y-auto pr-1">
             {list.map((w) => (
-              <div
+              <Card
                 key={w.key}
-                className="p-2.5 rounded-2xl bg-[#F5F5F7] dark:bg-[#16161A] border border-transparent dark:border-white/[0.06] flex items-center justify-between"
+                className="p-3.5 flex items-center justify-between gap-3"
               >
-                <div>
-                  <div className="text-xs font-bold text-[#1D1D1F] dark:text-[#F5F5F7]">{w.spanish}</div>
-                  <div className="text-[11px] text-[#86868B] dark:text-[#A1A1A6]">{w.english}</div>
+                <div className="min-w-0 pr-2">
+                  <p className="text-body font-medium text-primary truncate">
+                    {w.spanish}
+                  </p>
+                  <p className="text-caption text-muted truncate mt-0.5">
+                    {w.english}
+                  </p>
                 </div>
-                <div className="flex items-center gap-1">
+
+                <div className="flex items-center gap-1 shrink-0">
                   <button
                     type="button"
                     onClick={() => speakSpanish(w.spanish)}
-                    className="p-1 text-[#007AFF] dark:text-[#0A84FF] cursor-pointer"
+                    className="press-scale min-w-[36px] min-h-[36px] rounded-full flex items-center justify-center text-muted hover:text-accent hover:bg-subtle cursor-pointer transition-colors"
+                    aria-label={`Listen to ${w.spanish}`}
                   >
-                    <Icon name="volume" className="w-3.5 h-3.5" />
+                    <Icon name="volume" className="w-4 h-4" />
                   </button>
                   <button
                     type="button"
                     onClick={() => onRemove(w.key)}
-                    className="p-1 text-[#FF3B30] dark:text-[#FF453A] cursor-pointer"
+                    className="press-scale min-w-[36px] min-h-[36px] rounded-full flex items-center justify-center text-muted hover:text-status-error hover:bg-subtle cursor-pointer transition-colors"
+                    aria-label={`Remove ${w.spanish} from learned`}
                   >
-                    <Icon name="trash" className="w-3.5 h-3.5" />
+                    <Icon name="trash" className="w-4 h-4" />
                   </button>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         )}
       </div>
-    </div>
+    </Sheet>
   );
 }

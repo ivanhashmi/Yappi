@@ -1,8 +1,10 @@
 import React, { useState, useCallback, useMemo } from "react";
+import Icon from "./Icon";
+import { Sheet, Button, Card, Avatar } from "./ui";
 import { GEMINI_MODELS, GEMINI_VOICES, LANGUAGES } from "../data/languages";
 
 /* ============================================================================
- * BOTTOM SHEET: iOS Style Settings Sheet
+ * BOTTOM SHEET: Minimal Settings & Preferences Sheet
  * ========================================================================== */
 export default function SettingsBottomSheet({
   currentLanguage = "es",
@@ -10,7 +12,7 @@ export default function SettingsBottomSheet({
   onChangeTheme,
   settings,
   apiConnected = true,
-  voices,
+  voices = [],
   authUser,
   syncStatus,
   onOpenAuth,
@@ -48,405 +50,356 @@ export default function SettingsBottomSheet({
     });
   }, [voices, isHighQuality, currentLanguage]);
 
-  const currentTheme = draft.theme === "light" ? "light" : "amoled";
+  const currentTheme = draft.theme || "system";
+
+  const handleThemeChange = (newTheme) => {
+    setDraft((prev) => ({ ...prev, theme: newTheme }));
+    if (onChangeTheme) onChangeTheme(newTheme);
+  };
+
+  const handleSaveAndClose = () => {
+    onSave(draft);
+    onClose();
+  };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="w-full max-w-md bg-white dark:bg-[#0D0D10] dark:border dark:border-white/[0.10] rounded-t-[28px] sm:rounded-3xl p-5 space-y-4 max-h-[85vh] overflow-y-auto shadow-2xl">
-        {/* Grabber Bar */}
-        <div className="w-10 h-1 bg-black/20 dark:bg-white/20 rounded-full mx-auto mb-1 sm:hidden" />
-
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-bold text-[#1D1D1F] dark:text-[#F5F5F7]">Settings</h2>
-          <button
-            type="button"
-            onClick={() => onSave(draft)}
-            className="text-xs font-bold text-[#007AFF] dark:text-[#0A84FF] cursor-pointer"
+    <Sheet
+      isOpen={true}
+      onClose={handleSaveAndClose}
+      title="Settings"
+      actionButton={
+        <Button variant="ghost" size="sm" onClick={handleSaveAndClose}>
+          Done
+        </Button>
+      }
+    >
+      <div className="space-y-6 pt-2">
+        {/* Account / Cloud Sync Card */}
+        {onOpenAuth && (
+          <Card
+            interactive
+            onClick={onOpenAuth}
+            className="p-4 flex items-center justify-between gap-3"
           >
-            Done
-          </button>
-        </div>
-
-        <div className="space-y-3.5">
-          {/* Cloud Sync / Account Card */}
-          {onOpenAuth && (
-            <div
-              onClick={onOpenAuth}
-              className="press-scale p-3.5 rounded-2xl bg-[#F5F5F7] dark:bg-[#16161A] border border-black/[0.06] dark:border-white/[0.08] flex items-center justify-between gap-3 cursor-pointer hover:border-[#007AFF]/40 transition-all"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-white dark:bg-black border border-black/[0.06] dark:border-white/[0.10] flex items-center justify-center text-lg shadow-xs shrink-0">
-                  {authUser ? "☁️" : "👤"}
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-black text-[#1D1D1F] dark:text-[#F5F5F7]">
-                      {authUser ? "Cloud Sync Active" : "Guest Mode (Local Only)"}
-                    </span>
-                    {authUser && <span className="w-2 h-2 rounded-full bg-[#34C759]" />}
-                  </div>
-                  <p className="text-[11px] text-[#86868B] dark:text-[#A1A1A6] font-medium truncate">
-                    {authUser
-                      ? `${authUser.email} · ${syncStatus === "syncing" ? "Syncing..." : "Synced"}`
-                      : "Sign in or create account to sync across devices"}
-                  </p>
-                </div>
-              </div>
-              <span className="text-xs font-bold text-[#007AFF] dark:text-[#0A84FF] shrink-0">
-                {authUser ? "Profile" : "Sign In"}
-              </span>
-            </div>
-          )}
-
-          {/* Appearance Theme Switcher */}
-          <div>
-            <label className="block text-xs font-black text-[#86868B] dark:text-[#A1A1A6] uppercase tracking-wider mb-1.5">
-              Appearance
-            </label>
-            <div className="grid grid-cols-2 gap-1.5 p-1 bg-[#F5F5F7] dark:bg-[#16161A] border border-black/[0.05] dark:border-white/[0.08] rounded-xl">
-              <button
-                type="button"
-                onClick={() => {
-                  setDraft((prev) => ({ ...prev, theme: "amoled" }));
-                  onChangeTheme?.("amoled");
-                }}
-                className={`press-scale py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  currentTheme === "amoled"
-                    ? "bg-white dark:bg-white text-[#1D1D1F] dark:text-black shadow-sm"
-                    : "text-[#86868B] dark:text-[#A1A1A6]"
-                }`}
-              >
-                🌑 AMOLED Dark
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setDraft((prev) => ({ ...prev, theme: "light" }));
-                  onChangeTheme?.("light");
-                }}
-                className={`press-scale py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  currentTheme === "light"
-                    ? "bg-white text-[#1D1D1F] shadow-sm"
-                    : "text-[#86868B] dark:text-[#A1A1A6]"
-                }`}
-              >
-                ☀️ Light
-              </button>
-            </div>
-          </div>
-
-          {/* Duolingo-Style Course Switcher */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-xs font-black text-[#86868B] dark:text-[#A1A1A6] uppercase tracking-wider">
-                My Language Courses
-              </label>
-              <span className="text-[10px] font-bold text-[#58CC02] bg-[#58CC02]/10 dark:bg-[#58CC02]/15 px-2 py-0.5 rounded-full">
-                Tap to Switch
-              </span>
-            </div>
-            <div className="space-y-2">
-              {LANGUAGES.map((l) => {
-                const active = currentLanguage === l.id;
-                return (
-                  <div
-                    key={l.id}
-                    onClick={() => {
-                      if (onChangeLanguage) onChangeLanguage(l.id);
-                      setDraft((prev) => ({
-                        ...prev,
-                        accent: l.defaultAccent,
-                        selectedVoiceURI: "",
-                      }));
-                    }}
-                    className={`press-scale p-3.5 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between ${
-                      active
-                        ? "bg-[#58CC02]/[0.08] dark:bg-[#58CC02]/15 border-[#58CC02] shadow-sm"
-                        : "bg-white dark:bg-[#16161A] border-black/[0.08] dark:border-white/[0.08] hover:border-black/20 dark:hover:border-white/20"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-2xl bg-[#F5F5F7] dark:bg-black border border-black/[0.06] dark:border-white/[0.10] flex items-center justify-center text-2xl shadow-xs">
-                        {l.flag}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-black text-[#1D1D1F] dark:text-[#F5F5F7]">
-                            {l.name}
-                          </span>
-                          <span className="text-xs text-[#86868B] dark:text-[#A1A1A6] font-semibold">
-                            ({l.nativeName})
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-[#86868B] dark:text-[#A1A1A6] font-medium leading-tight mt-0.5">
-                          {l.id === "es"
-                            ? "Castilian & Mexican Spanish · 27 Letters"
-                            : l.id === "it"
-                            ? "Standard & Regional Italian · 21 Letters & Double Consonants"
-                            : "Parisian & Canadian French · 26 Letters & Accents"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div>
-                      {active ? (
-                        <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-[#58CC02] text-white text-[11px] font-black shadow-xs">
-                          <span>✓</span> Active
-                        </span>
-                      ) : (
-                        <span className="px-3 py-1 rounded-full bg-black/5 dark:bg-white/10 text-[#86868B] dark:text-[#A1A1A6] text-[11px] font-bold hover:text-[#1D1D1F] dark:hover:text-white">
-                          Switch
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* AI Status Card (Server-side proxy) */}
-          <div
-            className={`flex items-center justify-between p-3 rounded-2xl border ${
-              apiConnected
-                ? "bg-[#34C759]/10 dark:bg-[#34C759]/15 border-[#34C759]/20"
-                : "bg-[#FF9500]/10 dark:bg-[#FF9500]/15 border-[#FF9500]/25"
-            }`}
-          >
-            <div className="flex items-center gap-2.5">
-              <span
-                className={`w-2.5 h-2.5 rounded-full ${
-                  apiConnected
-                    ? "bg-[#34C759] shadow-[0_0_8px_#34C759]"
-                    : "bg-[#FF9500] shadow-[0_0_8px_#FF9500]"
-                }`}
+            <div className="flex items-center gap-3.5 min-w-0">
+              <Avatar
+                name={authUser?.email || "Guest"}
+                icon={authUser ? null : <Icon name="user" className="w-5 h-5" />}
+                size="md"
               />
-              <div>
-                <div className="text-xs font-bold text-[#1D1D1F] dark:text-[#F5F5F7]">
-                  {apiConnected ? "Google Gemini AI Active" : "Gemini AI Unavailable"}
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-body font-semibold text-primary">
+                    {authUser ? "Cloud Sync Active" : "Guest Mode"}
+                  </span>
+                  {authUser && (
+                    <span className="w-2 h-2 rounded-full bg-status-success" />
+                  )}
                 </div>
-                <div
-                  className={`text-[11px] font-semibold ${
-                    apiConnected ? "text-[#34C759]" : "text-[#FF9500]"
+                <p className="text-caption text-muted truncate mt-0.5">
+                  {authUser
+                    ? `${authUser.email} · ${syncStatus === "syncing" ? "Syncing…" : "Synced"}`
+                    : "Sign in to sync streak and vocabulary across devices"}
+                </p>
+              </div>
+            </div>
+            <span className="text-caption font-semibold text-accent shrink-0">
+              {authUser ? "Profile" : "Sign In"}
+            </span>
+          </Card>
+        )}
+
+        {/* Appearance Theme Switcher (System / Light / Dark) */}
+        <section className="space-y-2">
+          <label className="block text-overline font-semibold uppercase tracking-wider text-muted">
+            Appearance
+          </label>
+          <div className="grid grid-cols-3 gap-1.5 p-1 bg-subtle border border-hairline rounded-2xl">
+            {[
+              { id: "system", label: "System" },
+              { id: "light", label: "Light" },
+              { id: "amoled", label: "Dark" },
+            ].map((t) => {
+              const active = currentTheme === t.id || (t.id === "amoled" && currentTheme === "dark");
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => handleThemeChange(t.id)}
+                  className={`press-scale min-h-[40px] rounded-xl text-caption font-medium transition-all cursor-pointer ${
+                    active
+                      ? "bg-surface text-primary shadow-xs font-semibold"
+                      : "text-muted hover:text-primary"
                   }`}
                 >
-                  {apiConnected
-                    ? "Protected via server-side API proxy"
-                    : "Server GEMINI_API_KEY not configured"}
-                </div>
-              </div>
-            </div>
-            <span
-              className={`px-2 py-0.5 rounded-full bg-white dark:bg-black text-[10px] font-bold shadow-xs ${
-                apiConnected ? "text-[#34C759]" : "text-[#FF9500]"
-              }`}
-            >
-              {apiConnected ? "Connected" : "Offline"}
-            </span>
+                  {t.label}
+                </button>
+              );
+            })}
           </div>
+        </section>
 
-          {/* Gemini Model Selector */}
-          <div>
-            <label className="block text-xs font-bold text-[#86868B] dark:text-[#A1A1A6] uppercase mb-1">
-              Gemini Model
-            </label>
-            <select
-              value={draft.model || "gemini-3.5-flash-lite"}
-              onChange={(e) => setDraft({ ...draft, model: e.target.value })}
-              className="w-full px-2.5 py-2 rounded-xl bg-[#F5F5F7] dark:bg-[#16161A] dark:text-[#F5F5F7] dark:border dark:border-white/[0.08] text-xs font-semibold focus:outline-none"
-            >
-              {GEMINI_MODELS.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Voice Engine Selector */}
-          <div>
-            <label className="block text-xs font-bold text-[#86868B] dark:text-[#A1A1A6] uppercase mb-1">
-              Voice Audio Engine
-            </label>
-            <div className="grid grid-cols-2 gap-1.5 p-1 bg-[#F5F5F7] dark:bg-[#16161A] rounded-xl mb-2.5">
-              <button
-                type="button"
-                onClick={() => setDraft({ ...draft, voiceEngine: "gemini" })}
-                className={`press-scale py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  draft.voiceEngine !== "device"
-                    ? "bg-white dark:bg-white text-[#1D1D1F] dark:text-black shadow-sm"
-                    : "text-[#86868B] dark:text-[#A1A1A6]"
-                }`}
-              >
-                ✨ Google Neural Voice
-              </button>
-              <button
-                type="button"
-                onClick={() => setDraft({ ...draft, voiceEngine: "device" })}
-                className={`press-scale py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  draft.voiceEngine === "device"
-                    ? "bg-white dark:bg-white text-[#1D1D1F] dark:text-black shadow-sm"
-                    : "text-[#86868B] dark:text-[#A1A1A6]"
-                }`}
-              >
-                📱 Device Voice
-              </button>
-            </div>
-
-            {draft.voiceEngine !== "device" ? (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs font-bold text-[#86868B] dark:text-[#A1A1A6] uppercase">
-                  <span>Google AI Persona</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onSave(draft);
-                      setTimeout(() => onTestVoice(draft.geminiVoice || "Kore"), 50);
-                    }}
-                    className="text-[#007AFF] dark:text-[#0A84FF] font-semibold lowercase cursor-pointer"
-                  >
-                    play sample
-                  </button>
-                </div>
-                <select
-                  value={draft.geminiVoice || "Kore"}
-                  onChange={(e) => setDraft({ ...draft, geminiVoice: e.target.value })}
-                  className="w-full px-2.5 py-2 rounded-xl bg-[#F5F5F7] dark:bg-[#16161A] dark:text-[#F5F5F7] dark:border dark:border-white/[0.08] text-xs font-semibold focus:outline-none"
-                >
-                  {GEMINI_VOICES.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.label}
-                    </option>
-                  ))}
-                </select>
-                <div className="p-2 rounded-xl bg-[#007AFF]/[0.06] dark:bg-[#0A84FF]/15 border border-[#007AFF]/15 dark:border-[#0A84FF]/25 text-[11px] text-[#007AFF] dark:text-[#64D2FF] font-medium leading-relaxed">
-                  🎙️ <strong>Studio Neural Audio:</strong> Authentic native pronunciation with natural pacing for both Spanish and French.
-                </div>
-              </div>
-            ) : (
-              <div>
-                <div className="flex items-center justify-between text-xs font-bold text-[#86868B] dark:text-[#A1A1A6] uppercase mb-1">
-                  <span>Device {langConfig.name} Voice</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onSave(draft);
-                      setTimeout(onTestVoice, 50);
-                    }}
-                    className="text-[#007AFF] dark:text-[#0A84FF] font-semibold lowercase cursor-pointer"
-                  >
-                    play sample
-                  </button>
-                </div>
-                <select
-                  value={draft.selectedVoiceURI || ""}
-                  onChange={(e) => {
-                    setDraft({
-                      ...draft,
-                      selectedVoiceURI: e.target.value,
-                    });
+        {/* Course Switcher */}
+        <section className="space-y-2">
+          <label className="block text-overline font-semibold uppercase tracking-wider text-muted">
+            Active Language
+          </label>
+          <div className="space-y-2">
+            {LANGUAGES.map((l) => {
+              const active = currentLanguage === l.id;
+              return (
+                <Card
+                  key={l.id}
+                  interactive
+                  onClick={() => {
+                    if (onChangeLanguage) onChangeLanguage(l.id);
+                    setDraft((prev) => ({
+                      ...prev,
+                      accent: l.defaultAccent,
+                      selectedVoiceURI: "",
+                    }));
                   }}
-                  className="w-full px-2.5 py-2 rounded-xl bg-[#F5F5F7] dark:bg-[#16161A] dark:text-[#F5F5F7] dark:border dark:border-white/[0.08] text-xs font-semibold focus:outline-none"
+                  className={`p-3.5 flex items-center justify-between gap-3 ${
+                    active ? "border-accent bg-accent/5" : ""
+                  }`}
                 >
-                  <option value="">Auto (Default {langConfig.name} Voice)</option>
-                  {sortedVoices.map((v) => {
-                    const hq = isHighQuality(v.name);
-                    return (
-                      <option key={v.voiceURI || v.name} value={v.voiceURI || v.name}>
-                        {hq ? "⭐ " : ""}{v.name} ({v.lang}){hq ? " · Studio" : ""}
-                      </option>
-                    );
-                  })}
-                </select>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="text-2xl shrink-0" role="img" aria-label={l.name}>
+                      {l.flag}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-body font-semibold text-primary">
+                          {l.name}
+                        </span>
+                        <span className="text-caption text-muted">
+                          ({l.nativeName})
+                        </span>
+                      </div>
+                      <p className="text-overline text-muted truncate mt-0.5">
+                        {l.id === "es"
+                          ? "Castilian & Mexican Spanish"
+                          : l.id === "it"
+                          ? "Standard Italian"
+                          : "Standard French"}
+                      </p>
+                    </div>
+                  </div>
 
-                <div className="mt-1.5 p-2 rounded-xl bg-black/[0.03] dark:bg-white/[0.05] border border-black/[0.04] dark:border-white/[0.06] text-[11px] text-[#86868B] dark:text-[#A1A1A6] leading-relaxed">
-                  💡 macOS includes free neural Siri voices for Spanish, French & Italian! In Mac <strong>System Settings → Accessibility → Spoken Content → Manage Voices</strong> download Enhanced versions.
-                </div>
-              </div>
-            )}
+                  <span
+                    className={`text-caption font-semibold px-3 py-1 rounded-full ${
+                      active
+                        ? "bg-accent text-accent-contrast"
+                        : "text-muted hover:text-primary"
+                    }`}
+                  >
+                    {active ? "Active" : "Select"}
+                  </span>
+                </Card>
+              );
+            })}
           </div>
+        </section>
 
-          {/* Regional Accent Selection */}
-          <div>
-            <label className="block text-xs font-bold text-[#86868B] dark:text-[#A1A1A6] uppercase mb-1">
-              Accent Region ({langConfig.name})
+        {/* AI Engine Status */}
+        <Card className="p-3.5 flex items-center justify-between gap-3 bg-subtle/60">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span
+              className={`w-2 h-2 rounded-full shrink-0 ${
+                apiConnected ? "bg-status-success" : "bg-status-warning"
+              }`}
+            />
+            <div className="min-w-0">
+              <p className="text-caption font-semibold text-primary truncate">
+                {apiConnected ? "Google Gemini AI Connected" : "Gemini AI Offline"}
+              </p>
+              <p className="text-overline text-muted truncate">
+                {apiConnected
+                  ? "Server-side proxy active"
+                  : "Using offline vocabulary templates"}
+              </p>
+            </div>
+          </div>
+          <span
+            className={`text-overline font-semibold px-2 py-0.5 rounded-full border border-hairline shrink-0 ${
+              apiConnected
+                ? "bg-status-success/10 text-status-success"
+                : "bg-status-warning/10 text-status-warning"
+            }`}
+          >
+            {apiConnected ? "Online" : "Offline"}
+          </span>
+        </Card>
+
+        {/* Gemini Model Selector */}
+        <section className="space-y-1.5">
+          <label className="block text-overline font-semibold uppercase tracking-wider text-muted">
+            Gemini Model
+          </label>
+          <select
+            value={draft.model || "gemini-3.5-flash-lite"}
+            onChange={(e) => setDraft({ ...draft, model: e.target.value })}
+            className="w-full min-h-[44px] px-3.5 rounded-xl bg-surface border border-hairline text-body text-primary focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent"
+          >
+            {GEMINI_MODELS.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.label}
+              </option>
+            ))}
+          </select>
+        </section>
+
+        {/* Voice Audio Engine */}
+        <section className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="block text-overline font-semibold uppercase tracking-wider text-muted">
+              Voice Engine
             </label>
-            <select
-              value={draft.accent || langConfig.defaultAccent}
-              onChange={(e) => setDraft({ ...draft, accent: e.target.value })}
-              className="w-full px-2.5 py-2 rounded-xl bg-[#F5F5F7] dark:bg-[#16161A] dark:text-[#F5F5F7] dark:border dark:border-white/[0.08] text-xs font-semibold focus:outline-none"
-            >
-              {langConfig.accents.map((acc) => (
-                <option key={acc.id} value={acc.id}>
-                  {acc.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Speech Speed */}
-          <div>
-            <div className="flex items-center justify-between text-xs font-bold text-[#86868B] dark:text-[#A1A1A6] uppercase mb-1">
-              <span>Speech Speed</span>
-              <span className="text-[#1D1D1F] dark:text-[#F5F5F7] font-mono">{draft.speechRate}x</span>
-            </div>
-            <input
-              type="range"
-              min="0.7"
-              max="1.15"
-              step="0.05"
-              value={draft.speechRate}
-              onChange={(e) => setDraft({ ...draft, speechRate: parseFloat(e.target.value) })}
-              className="w-full accent-[#007AFF] dark:accent-[#0A84FF]"
-            />
-            <div className="flex justify-between text-[10px] text-[#86868B] dark:text-[#A1A1A6] px-0.5">
-              <span>Slower (Beginner)</span>
-              <span>Normal</span>
-              <span>Fast</span>
-            </div>
-          </div>
-
-          {/* Auto-Speak Toggle */}
-          <div className="flex items-center justify-between p-3 rounded-2xl bg-[#F5F5F7] dark:bg-[#16161A] border border-transparent dark:border-white/[0.08]">
-            <div>
-              <div className="text-xs font-bold text-[#1D1D1F] dark:text-[#F5F5F7]">
-                Auto-Speak Responses
-              </div>
-              <div className="text-[11px] text-[#86868B] dark:text-[#A1A1A6]">
-                Play tutor voice automatically
-              </div>
-            </div>
-            <input
-              type="checkbox"
-              checked={draft.autoSpeak}
-              onChange={(e) => setDraft({ ...draft, autoSpeak: e.target.checked })}
-              className="w-5 h-5 accent-[#007AFF] dark:accent-[#0A84FF] cursor-pointer"
-            />
-          </div>
-
-          {/* Reset App Progress */}
-          <div className="pt-2 border-t border-black/[0.06] dark:border-white/[0.08] flex items-center justify-between">
             <button
               type="button"
               onClick={() => {
-                if (window.confirm("Reset all streak, learned words, and custom decks?")) {
-                  onResetProgress();
-                }
+                onSave(draft);
+                setTimeout(() => onTestVoice(draft.geminiVoice || "Kore"), 50);
               }}
-              className="text-xs font-semibold text-[#FF3B30] dark:text-[#FF453A] cursor-pointer"
+              className="text-caption font-semibold text-accent hover:underline cursor-pointer"
             >
-              Reset All Progress
+              Play sample
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-1.5 p-1 bg-subtle border border-hairline rounded-2xl mb-2">
+            <button
+              type="button"
+              onClick={() => setDraft({ ...draft, voiceEngine: "gemini" })}
+              className={`press-scale min-h-[40px] rounded-xl text-caption font-medium transition-all cursor-pointer ${
+                draft.voiceEngine !== "device"
+                  ? "bg-surface text-primary font-semibold shadow-xs"
+                  : "text-muted hover:text-primary"
+              }`}
+            >
+              Google Neural Voice
             </button>
             <button
               type="button"
-              onClick={() => onSave(draft)}
-              className="press-scale px-4 py-2 rounded-full bg-[#007AFF] dark:bg-[#0A84FF] text-white text-xs font-bold cursor-pointer"
+              onClick={() => setDraft({ ...draft, voiceEngine: "device" })}
+              className={`press-scale min-h-[40px] rounded-xl text-caption font-medium transition-all cursor-pointer ${
+                draft.voiceEngine === "device"
+                  ? "bg-surface text-primary font-semibold shadow-xs"
+                  : "text-muted hover:text-primary"
+              }`}
             >
-              Save
+              Device Voice
             </button>
           </div>
+
+          {draft.voiceEngine !== "device" ? (
+            <select
+              value={draft.geminiVoice || "Kore"}
+              onChange={(e) => setDraft({ ...draft, geminiVoice: e.target.value })}
+              className="w-full min-h-[44px] px-3.5 rounded-xl bg-surface border border-hairline text-body text-primary focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent"
+            >
+              {GEMINI_VOICES.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.label}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <select
+              value={draft.selectedVoiceURI || ""}
+              onChange={(e) => setDraft({ ...draft, selectedVoiceURI: e.target.value })}
+              className="w-full min-h-[44px] px-3.5 rounded-xl bg-surface border border-hairline text-body text-primary focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent"
+            >
+              <option value="">Auto (Default {langConfig.name} Voice)</option>
+              {sortedVoices.map((v) => (
+                <option key={v.voiceURI || v.name} value={v.voiceURI || v.name}>
+                  {v.name} ({v.lang})
+                </option>
+              ))}
+            </select>
+          )}
+        </section>
+
+        {/* Accent Region */}
+        <section className="space-y-1.5">
+          <label className="block text-overline font-semibold uppercase tracking-wider text-muted">
+            Accent Region
+          </label>
+          <select
+            value={draft.accent || langConfig.defaultAccent}
+            onChange={(e) => setDraft({ ...draft, accent: e.target.value })}
+            className="w-full min-h-[44px] px-3.5 rounded-xl bg-surface border border-hairline text-body text-primary focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent"
+          >
+            {langConfig.accents.map((acc) => (
+              <option key={acc.id} value={acc.id}>
+                {acc.label}
+              </option>
+            ))}
+          </select>
+        </section>
+
+        {/* Speech Speed */}
+        <section className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="block text-overline font-semibold uppercase tracking-wider text-muted">
+              Speech Speed
+            </label>
+            <span className="text-caption font-mono font-medium text-primary">
+              {draft.speechRate}×
+            </span>
+          </div>
+          <input
+            type="range"
+            min="0.7"
+            max="1.15"
+            step="0.05"
+            value={draft.speechRate}
+            onChange={(e) => setDraft({ ...draft, speechRate: parseFloat(e.target.value) })}
+            className="w-full accent-accent cursor-pointer"
+          />
+          <div className="flex justify-between text-overline text-muted">
+            <span>0.7× Slow</span>
+            <span>1.0× Normal</span>
+            <span>1.15× Fast</span>
+          </div>
+        </section>
+
+        {/* Auto-Speak Toggle */}
+        <Card className="p-3.5 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-caption font-semibold text-primary">
+              Auto-Speak Responses
+            </p>
+            <p className="text-overline text-muted">
+              Automatically play tutor audio on new message
+            </p>
+          </div>
+          <input
+            type="checkbox"
+            checked={draft.autoSpeak}
+            onChange={(e) => setDraft({ ...draft, autoSpeak: e.target.checked })}
+            className="w-5 h-5 accent-accent cursor-pointer"
+          />
+        </Card>
+
+        {/* Actions Footer */}
+        <div className="pt-4 border-t border-hairline flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm("Reset all streak, learned words, and custom decks?")) {
+                onResetProgress();
+              }
+            }}
+            className="text-caption font-semibold text-status-error hover:underline cursor-pointer"
+          >
+            Reset All Progress
+          </button>
+          <Button variant="primary" onClick={handleSaveAndClose}>
+            Save Changes
+          </Button>
         </div>
       </div>
-    </div>
+    </Sheet>
   );
 }

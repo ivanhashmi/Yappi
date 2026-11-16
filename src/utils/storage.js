@@ -73,7 +73,7 @@ export function createDefaultState() {
       speechRate: 0.92,
       autoSpeak: true,
       allowProxyWithoutKey: false,
-      theme: "amoled",
+      theme: "system",
     },
   };
 }
@@ -137,7 +137,9 @@ export function loadSavedState() {
     const geminiVoice = savedSettings.geminiVoice || "Kore";
     const defaultAcc = LANGUAGES.find((l) => l.id === selectedLanguage)?.defaultAccent || "es-ES";
     const accent = savedSettings.accent || defaultAcc;
-    const theme = savedSettings.theme === "light" ? "light" : "amoled";
+    const theme = ["light", "dark", "amoled", "system"].includes(savedSettings.theme)
+      ? savedSettings.theme
+      : "system";
 
     return {
       selectedLanguage,

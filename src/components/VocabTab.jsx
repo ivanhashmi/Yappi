@@ -1,10 +1,12 @@
 import React, { useState, useMemo, useEffect } from "react";
 import Icon from "./Icon";
+import { Chip, Button, Card } from "./ui";
 import { PRESET_DECKS_DATA } from "../data/languages";
 import { callAI, extractJson, buildFallbackVocabDeck } from "../services/gemini";
+import { triggerHaptic } from "../utils/haptics";
 
 /* ============================================================================
- * TAB 3: VOCAB — Phone-First 3D Flip Flashcards & AI Generator
+ * TAB 3: FLASHCARDS / VOCAB — Minimal Apple/Google 3D Flip Card Experience
  * ========================================================================== */
 export default function VocabTab({
   language = "es",
@@ -50,13 +52,20 @@ export default function VocabTab({
   const currentCard = cards[cardIndex] || cards[0];
 
   const handleNext = () => {
+    triggerHaptic("selection");
     setIsFlipped(false);
     setCardIndex((prev) => (prev + 1) % cards.length);
   };
 
   const handlePrev = () => {
+    triggerHaptic("selection");
     setIsFlipped(false);
     setCardIndex((prev) => (prev - 1 + cards.length) % cards.length);
+  };
+
+  const handleFlip = () => {
+    triggerHaptic("light");
+    setIsFlipped((prev) => !prev);
   };
 
   const handleGenerateDeck = async (e) => {
@@ -129,131 +138,142 @@ Respond ONLY with raw JSON:
   };
 
   return (
-    <div className="space-y-4">
+    <div className="flex-1 flex flex-col space-y-6 pb-24 animate-fade-in">
+      {/* Title Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-display font-semibold tracking-tight text-primary">
+            Flashcards
+          </h1>
+          <p className="text-caption text-muted mt-0.5">
+            Master {langName} vocabulary with active recall and audio pronunciation
+          </p>
+        </div>
+      </div>
+
       {/* Deck Selector Strip */}
-      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
         {allDecks.map((d) => {
           const active = d.id === activeDeckId;
           return (
-            <button
+            <Chip
               key={d.id}
-              type="button"
+              active={active}
               onClick={() => {
                 setActiveDeckId(d.id);
                 setCardIndex(0);
                 setIsFlipped(false);
               }}
-              className={`press-scale whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-                active
-                  ? "bg-[#007AFF] dark:bg-[#0A84FF] text-white shadow-xs"
-                  : "bg-black/5 dark:bg-white/[0.08] text-[#1D1D1F] dark:text-[#F5F5F7] hover:bg-black/10 dark:hover:bg-white/[0.14]"
-              }`}
             >
               {d.title}
-              {d.isCustom && <span className="ml-1 text-[10px] opacity-75">✨</span>}
-            </button>
+            </Chip>
           );
         })}
 
-        <button
-          type="button"
+        <Chip
+          active={showGenCard}
           onClick={() => setShowGenCard((prev) => !prev)}
-          className="press-scale whitespace-nowrap px-3 py-1.5 rounded-full bg-[#007AFF]/10 dark:bg-[#0A84FF]/15 text-[#007AFF] dark:text-[#0A84FF] text-xs font-bold hover:bg-[#007AFF]/20 cursor-pointer flex items-center gap-1"
+          icon={<Icon name="sparkles" className="w-3.5 h-3.5" />}
         >
-          <Icon name="sparkles" className="w-3.5 h-3.5" />
           New Deck
-        </button>
+        </Chip>
       </div>
 
       {/* AI Deck Generator Card (Collapsible) */}
       {showGenCard && (
-        <form
-          onSubmit={handleGenerateDeck}
-          className="material-card rounded-3xl p-4 space-y-3 animate-fadeIn"
-        >
+        <Card className="p-5 space-y-4 animate-fade-in">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs font-bold text-[#1D1D1F] dark:text-[#F5F5F7]">
-              <Icon name="sparkles" className="w-4 h-4 text-[#007AFF] dark:text-[#0A84FF]" />
-              <span>Generate Custom {langName} Deck with AI</span>
+            <div className="flex items-center gap-2">
+              <Icon name="sparkles" className="w-4 h-4 text-accent" />
+              <h2 className="text-headline font-semibold text-primary">
+                Generate Custom {langName} Deck
+              </h2>
             </div>
             <button
               type="button"
               onClick={() => setShowGenCard(false)}
-              className="text-xs text-[#86868B] dark:text-[#A1A1A6] cursor-pointer"
+              className="text-caption text-muted hover:text-primary cursor-pointer"
             >
               Cancel
             </button>
           </div>
 
           {!apiConnected && (
-            <div className="p-2 rounded-xl bg-[#FF9500]/10 border border-[#FF9500]/20 text-[11px] text-[#FF9500]">
-              ⚡ Server AI offline. AI deck will use built-in template words.{" "}
+            <div className="p-3 rounded-xl bg-status-warning/10 text-status-warning text-caption font-medium flex items-center justify-between">
+              <span>Server AI is offline. Will generate from curated vocabulary templates.</span>
               <button
                 type="button"
                 onClick={onOpenSettings}
-                className="font-bold underline cursor-pointer"
+                className="text-accent underline font-semibold ml-2 cursor-pointer"
               >
                 Settings
               </button>
             </div>
           )}
 
-          <div className="flex items-center gap-2">
+          <form onSubmit={handleGenerateDeck} className="flex flex-col sm:flex-row gap-2">
             <input
               type="text"
               value={genTopic}
               onChange={(e) => setGenTopic(e.target.value)}
               placeholder={
                 language === "fr"
-                  ? "e.g. Boulangerie, Métro parisien, Commander au restaurant"
+                  ? "e.g. Boulangerie, Métro parisien, Commander au café…"
                   : language === "it"
-                  ? "e.g. Colosseo, Bar italiano, Ordinare una pizza, In treno"
-                  : "e.g. Airport, Hotel check-in, Doctor visit, Ordering tapas"
+                  ? "e.g. Colosseo, Bar italiano, Ordinare una pizza…"
+                  : "e.g. Airport check-in, Ordering tapas, At the museum…"
               }
-              className="flex-1 px-3 py-2 rounded-xl bg-[#F5F5F7] dark:bg-[#16161A] dark:border dark:border-white/[0.08] text-xs text-[#1D1D1F] dark:text-[#F5F5F7] placeholder-[#86868B] focus:outline-none"
+              className="flex-1 min-h-[44px] bg-subtle border border-hairline rounded-xl px-3.5 py-2 text-body text-primary placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent"
             />
-            <button
+            <Button
               type="submit"
+              variant="primary"
               disabled={!genTopic.trim() || isGenerating}
-              className={`press-scale px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                genTopic.trim() && !isGenerating
-                  ? "bg-[#007AFF] dark:bg-[#0A84FF] text-white cursor-pointer shadow-xs"
-                  : "bg-black/5 dark:bg-white/10 text-[#C7C7CC] dark:text-[#48484A] cursor-not-allowed"
-              }`}
+              loading={isGenerating}
+              className="shrink-0"
             >
               {isGenerating ? "Creating…" : "Generate"}
-            </button>
-          </div>
-        </form>
+            </Button>
+          </form>
+        </Card>
       )}
 
-      {/* 3D Flip Flashcard */}
+      {/* Single Large Centered Flashcard */}
       {currentCard && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between px-1 text-xs text-[#86868B] dark:text-[#A1A1A6]">
-            <span className="font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between text-overline text-muted px-1">
+            <span className="font-medium text-primary">
               {activeDeck.title}{" "}
-              <span className="text-[#86868B] dark:text-[#A1A1A6] font-normal">({activeDeck.spanishTitle})</span>
+              <span className="text-muted font-normal">({activeDeck.spanishTitle})</span>
             </span>
             <span>
-              Card {cardIndex + 1} of {cards.length}
+              {cardIndex + 1} of {cards.length}
             </span>
           </div>
 
-          {/* Flip Container */}
+          {/* 3D Flip Container */}
           <div
-            onClick={() => setIsFlipped((prev) => !prev)}
+            onClick={handleFlip}
             className="perspective-1000 cursor-pointer select-none"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleFlip();
+              }
+            }}
+            aria-label="Flashcard. Tap or press space to flip."
           >
             <div
-              className={`relative w-full min-h-[260px] rounded-3xl transition-transform duration-500 transform-style-preserve-3d shadow-md ${
+              className={`relative w-full min-h-[300px] sm:min-h-[340px] rounded-3xl card-flip-transition transform-style-3d shadow-xs ${
                 isFlipped ? "rotate-y-180" : ""
               }`}
             >
               {/* FRONT OF CARD (Target Language) */}
-              <div className="absolute inset-0 backface-hidden bg-white dark:bg-[#0D0D10] border border-black/[0.06] dark:border-white/[0.10] rounded-3xl p-6 flex flex-col justify-between">
+              <div className="absolute inset-0 backface-hidden bg-surface border border-hairline rounded-3xl p-6 sm:p-8 flex flex-col justify-between">
                 <div className="flex items-center justify-between">
-                  <span className="px-2.5 py-1 rounded-full bg-[#007AFF]/10 dark:bg-[#0A84FF]/15 text-[11px] font-bold text-[#007AFF] dark:text-[#0A84FF]">
+                  <span className="px-3 py-1 rounded-full bg-subtle border border-hairline text-overline font-semibold text-muted tracking-wide uppercase">
                     {langCodeTitle}
                   </span>
                   <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
@@ -263,20 +283,20 @@ Respond ONLY with raw JSON:
                         recordPractice();
                         speakSpanish(currentCard.spanish);
                       }}
-                      className="press-scale p-2 rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/15 text-[#007AFF] dark:text-[#0A84FF] cursor-pointer"
-                      title="Listen"
+                      className="press-scale min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center text-muted hover:text-accent hover:bg-subtle cursor-pointer transition-colors"
+                      aria-label="Listen to pronunciation"
                     >
                       <Icon name="volume" className="w-4 h-4" />
                     </button>
                     <button
                       type="button"
                       onClick={() => onToggleLearned(currentCard, activeDeck.title)}
-                      className={`press-scale p-2 rounded-full cursor-pointer transition-colors ${
+                      className={`press-scale min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center transition-colors cursor-pointer ${
                         isWordLearned(currentCard)
-                          ? "bg-[#34C759] text-white"
-                          : "bg-black/5 dark:bg-white/10 text-[#86868B] dark:text-[#A1A1A6]"
+                          ? "text-status-success bg-status-success/10"
+                          : "text-muted hover:text-primary hover:bg-subtle"
                       }`}
-                      title={
+                      aria-label={
                         isWordLearned(currentCard)
                           ? "Marked as learned"
                           : "Mark as learned"
@@ -287,25 +307,27 @@ Respond ONLY with raw JSON:
                   </div>
                 </div>
 
-                <div className="text-center py-4 space-y-2">
-                  <h3 className="text-2xl font-bold text-[#1D1D1F] dark:text-[#F5F5F7] tracking-tight">
+                <div className="text-center py-6 space-y-2">
+                  <h3 className="text-display font-semibold text-primary tracking-tight">
                     {currentCard.spanish}
                   </h3>
-                  <div className="text-xs font-mono text-[#007AFF] dark:text-[#64D2FF] font-medium">
-                    🗣️ {currentCard.pronunciation}
-                  </div>
+                  {currentCard.pronunciation && (
+                    <p className="text-caption font-mono text-muted">
+                      {currentCard.pronunciation}
+                    </p>
+                  )}
                 </div>
 
-                <div className="text-center text-[11px] text-[#86868B] dark:text-[#A1A1A6] flex items-center justify-center gap-1">
-                  <span>Tap card to reveal English meaning</span>
-                  <Icon name="swap" className="w-3 h-3" />
+                <div className="text-center text-overline text-muted flex items-center justify-center gap-1.5">
+                  <Icon name="swap" className="w-3.5 h-3.5 opacity-60" />
+                  <span>Tap to reveal translation</span>
                 </div>
               </div>
 
-              {/* BACK OF CARD (English + Example) */}
-              <div className="absolute inset-0 backface-hidden rotate-y-180 bg-linear-to-br from-[#007AFF]/[0.08] to-white dark:from-[#0A84FF]/20 dark:to-[#0D0D10] border border-[#007AFF]/20 dark:border-[#0A84FF]/30 rounded-3xl p-6 flex flex-col justify-between">
+              {/* BACK OF CARD (English + Context Example) */}
+              <div className="absolute inset-0 backface-hidden rotate-y-180 bg-surface border border-hairline rounded-3xl p-6 sm:p-8 flex flex-col justify-between">
                 <div className="flex items-center justify-between">
-                  <span className="px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/10 text-[11px] font-bold text-[#1D1D1F] dark:text-[#F5F5F7]">
+                  <span className="px-3 py-1 rounded-full bg-subtle border border-hairline text-overline font-semibold text-muted tracking-wide uppercase">
                     English
                   </span>
                   <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
@@ -315,78 +337,82 @@ Respond ONLY with raw JSON:
                         recordPractice();
                         speakSpanish(currentCard.example_es);
                       }}
-                      className="press-scale p-2 rounded-full bg-white dark:bg-white/10 text-[#007AFF] dark:text-[#0A84FF] shadow-xs cursor-pointer"
-                      title="Listen example"
+                      className="press-scale min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center text-muted hover:text-accent hover:bg-subtle cursor-pointer transition-colors"
+                      aria-label="Listen to example sentence"
                     >
                       <Icon name="volume" className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
 
-                <div className="text-center py-2 space-y-3">
-                  <h3 className="text-2xl font-bold text-[#1D1D1F] dark:text-[#F5F5F7]">{currentCard.english}</h3>
+                <div className="text-center py-4 space-y-4">
+                  <h3 className="text-display font-semibold text-primary">
+                    {currentCard.english}
+                  </h3>
                   {currentCard.example_es && (
-                    <div className="p-3 rounded-2xl bg-white/80 dark:bg-black/60 border border-black/[0.04] dark:border-white/[0.08] text-left space-y-1">
-                      <div className="text-xs font-semibold text-[#1D1D1F] dark:text-[#F5F5F7]">
+                    <div className="p-3.5 rounded-2xl bg-subtle border border-hairline text-left space-y-1">
+                      <p className="text-body font-medium text-primary">
                         {currentCard.example_es}
-                      </div>
-                      <div className="text-[11px] text-[#86868B] dark:text-[#A1A1A6]">
+                      </p>
+                      <p className="text-caption text-muted">
                         {currentCard.example_en}
-                      </div>
+                      </p>
                     </div>
                   )}
                 </div>
 
-                <div className="text-center text-[11px] text-[#86868B] dark:text-[#A1A1A6]">
-                  Tap card to flip back to {langCodeTitle}
+                <div className="text-center text-overline text-muted flex items-center justify-center gap-1.5">
+                  <Icon name="swap" className="w-3.5 h-3.5 opacity-60" />
+                  <span>Tap to flip back</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Flashcard Controls */}
-          <div className="flex items-center justify-between pt-1">
-            <button
-              type="button"
+          {/* Minimal Controls Beneath Flashcard */}
+          <div className="flex items-center justify-between pt-2">
+            <Button
+              variant="secondary"
               onClick={handlePrev}
-              className="press-scale px-4 py-2 rounded-full bg-white dark:bg-[#111114] border border-black/10 dark:border-white/[0.10] text-xs font-bold text-[#1D1D1F] dark:text-[#F5F5F7] shadow-xs cursor-pointer flex items-center gap-1.5"
+              icon={<Icon name="arrowLeft" className="w-4 h-4" />}
+              aria-label="Previous card"
             >
-              <Icon name="arrowLeft" className="w-3.5 h-3.5" />
               Prev
-            </button>
+            </Button>
 
             <button
               type="button"
               onClick={() => {
+                triggerHaptic("success");
                 onToggleLearned(currentCard, activeDeck.title);
                 handleNext();
               }}
-              className={`press-scale px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`press-scale min-h-[44px] px-4 rounded-full text-caption font-semibold transition-all cursor-pointer inline-flex items-center gap-1.5 border border-hairline ${
                 isWordLearned(currentCard)
-                  ? "bg-[#34C759] text-white shadow-xs"
-                  : "bg-black/5 dark:bg-white/10 text-[#1D1D1F] dark:text-[#F5F5F7] hover:bg-black/10 dark:hover:bg-white/15"
+                  ? "bg-status-success/10 text-status-success border-status-success/30"
+                  : "bg-surface text-muted hover:text-primary hover:bg-subtle"
               }`}
             >
-              <Icon name="check" className="w-3.5 h-3.5" />
-              {isWordLearned(currentCard) ? "Learned ✓" : "Mark Learned"}
+              <Icon name="check" className="w-4 h-4" />
+              <span>{isWordLearned(currentCard) ? "Learned" : "Mark Learned"}</span>
             </button>
 
-            <button
-              type="button"
+            <Button
+              variant="primary"
               onClick={handleNext}
-              className="press-scale px-4 py-2 rounded-full bg-[#007AFF] dark:bg-[#0A84FF] text-white text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1.5"
+              aria-label="Next card"
             >
-              Next
-              <Icon name="arrowRight" className="w-3.5 h-3.5" />
-            </button>
+              <span>Next</span>
+              <Icon name="arrowRight" className="w-4 h-4" />
+            </Button>
           </div>
         </div>
       )}
 
       {/* Deck Overview List */}
-      <div className="space-y-2 pt-2">
-        <div className="flex items-center justify-between px-1">
-          <h2 className="text-xs font-bold text-[#86868B] dark:text-[#A1A1A6] uppercase tracking-wider">
+      <section className="space-y-3 pt-4 border-t border-hairline">
+        <div className="flex items-center justify-between">
+          <h2 className="text-overline font-semibold uppercase tracking-wider text-muted">
             All Cards in Deck ({cards.length})
           </h2>
           {activeDeck.isCustom && (
@@ -396,63 +422,71 @@ Respond ONLY with raw JSON:
                 onDeleteCustomDeck(activeDeck.id);
                 setActiveDeckId(presetDecks[0].id);
               }}
-              className="text-[11px] font-semibold text-[#FF3B30] dark:text-[#FF453A] cursor-pointer"
+              className="text-overline font-semibold text-status-error hover:underline cursor-pointer"
             >
               Delete Deck
             </button>
           )}
         </div>
 
-        <div className="space-y-1.5">
+        <div className="grid grid-cols-1 gap-2">
           {cards.map((c, idx) => {
             const learned = isWordLearned(c);
+            const isCurrent = idx === cardIndex;
             return (
-              <div
+              <Card
                 key={c.id || idx}
+                interactive
                 onClick={() => {
                   setCardIndex(idx);
                   setIsFlipped(false);
                 }}
-                className={`press-scale p-3 rounded-2xl material-card flex items-center justify-between cursor-pointer transition-all ${
-                  idx === cardIndex ? "border-[#007AFF] dark:border-[#0A84FF] bg-[#007AFF]/[0.03] dark:bg-[#0A84FF]/10" : ""
+                className={`p-3.5 flex items-center justify-between gap-3 ${
+                  isCurrent ? "border-accent bg-accent/5" : ""
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <span className="w-6 text-center text-xs font-bold text-[#86868B] dark:text-[#A1A1A6]">
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <span className="w-6 text-center text-overline font-semibold text-muted">
                     {idx + 1}
                   </span>
-                  <div>
-                    <div className="text-xs font-bold text-[#1D1D1F] dark:text-[#F5F5F7]">{c.spanish}</div>
-                    <div className="text-[11px] text-[#86868B] dark:text-[#A1A1A6]">{c.english}</div>
+                  <div className="min-w-0">
+                    <p className="text-body font-medium text-primary truncate">
+                      {c.spanish}
+                    </p>
+                    <p className="text-caption text-muted truncate">
+                      {c.english}
+                    </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
                   <button
                     type="button"
                     onClick={() => {
                       recordPractice();
                       speakSpanish(c.spanish);
                     }}
-                    className="p-1 text-[#007AFF] dark:text-[#0A84FF] cursor-pointer"
+                    className="press-scale min-w-[36px] min-h-[36px] rounded-full flex items-center justify-center text-muted hover:text-accent hover:bg-subtle cursor-pointer transition-colors"
+                    aria-label={`Listen to ${c.spanish}`}
                   >
                     <Icon name="volume" className="w-3.5 h-3.5" />
                   </button>
                   <button
                     type="button"
                     onClick={() => onToggleLearned(c, activeDeck.title)}
-                    className={`p-1 rounded-full cursor-pointer ${
-                      learned ? "text-[#34C759]" : "text-[#C7C7CC] dark:text-[#48484A]"
+                    className={`press-scale min-w-[36px] min-h-[36px] rounded-full flex items-center justify-center transition-colors cursor-pointer ${
+                      learned ? "text-status-success" : "text-muted/40 hover:text-muted"
                     }`}
+                    aria-label={learned ? "Learned" : "Mark learned"}
                   >
                     <Icon name="check" className="w-3.5 h-3.5" />
                   </button>
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

@@ -8,3 +8,6 @@ export { default as TranslateTab } from "./TranslateTab";
 export { default as SettingsBottomSheet } from "./SettingsBottomSheet";
 export { default as LearnedWordsBottomSheet } from "./LearnedWordsBottomSheet";
 export { default as AuthBottomSheet } from "./AuthBottomSheet";
+
+// Shared Minimal UI Component Library
+export * from "./ui";

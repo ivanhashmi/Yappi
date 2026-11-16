@@ -33,6 +33,10 @@ import {
   SettingsBottomSheet,
   LearnedWordsBottomSheet,
   AuthBottomSheet,
+  TabBar,
+  Avatar,
+  Button,
+  DesktopSidebar,
 } from "./components";
 
 export default function App() {
@@ -452,20 +456,40 @@ export default function App() {
     [runBgSync]
   );
 
+  const activeTheme = appState.settings?.theme || "system";
+
   const toggleTheme = useCallback(() => {
-    const isLight = appStateRef.current.settings?.theme === "light";
-    handleChangeTheme(isLight ? "amoled" : "light");
+    const current = appStateRef.current.settings?.theme || "system";
+    const next = current === "light" ? "dark" : current === "dark" ? "system" : "light";
+    handleChangeTheme(next);
   }, [handleChangeTheme]);
 
-  // Apply AMOLED Dark Mode class & theme-color meta tag
-  const activeTheme = appState.settings?.theme === "light" ? "light" : "amoled";
+  // Dark Mode: follows system preference by default, with manual light/dark/system override
   useEffect(() => {
-    const isDark = activeTheme !== "light";
-    document.documentElement.classList.toggle("dark", isDark);
-    const metaTheme = document.querySelector('meta[name="theme-color"]');
-    if (metaTheme) metaTheme.setAttribute("content", isDark ? "#000000" : "#F5F5F7");
-    const statusBar = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
-    if (statusBar) statusBar.setAttribute("content", isDark ? "black-translucent" : "default");
+    if (typeof window === "undefined") return;
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+    const computeIsDark = () => {
+      if (activeTheme === "light") return false;
+      if (activeTheme === "dark" || activeTheme === "amoled") return true;
+      return mediaQuery.matches;
+    };
+
+    const applyTheme = () => {
+      const isDark = computeIsDark();
+      document.documentElement.classList.toggle("dark", isDark);
+      const metaTheme = document.querySelector('meta[name="theme-color"]');
+      if (metaTheme) metaTheme.setAttribute("content", isDark ? "#000000" : "#FBFBFD");
+      const statusBar = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+      if (statusBar) statusBar.setAttribute("content", isDark ? "black-translucent" : "default");
+    };
+
+    applyTheme();
+
+    if (activeTheme === "system") {
+      mediaQuery.addEventListener("change", applyTheme);
+      return () => mediaQuery.removeEventListener("change", applyTheme);
+    }
   }, [activeTheme]);
 
   const learnedCount = Object.keys(appState.learnedWords).length;
@@ -473,97 +497,128 @@ export default function App() {
     serverApiConfigured || appState.settings.allowProxyWithoutKey
   );
 
-  const tabs = [
-    { id: "chat", label: "Tutor", icon: "tab-chat" },
-    { id: "characters", label: "Characters", icon: "tab-characters" },
-    { id: "vocab", label: "Vocab", icon: "tab-vocab" },
-    { id: "translate", label: "Translate", icon: "tab-translate" },
-  ];
+  const navTabs = useMemo(
+    () => [
+      { id: "chat", label: "Tutor", icon: <Icon name="tab-chat" className="w-5 h-5" /> },
+      { id: "characters", label: "Characters", icon: <Icon name="tab-characters" className="w-5 h-5" /> },
+      { id: "vocab", label: "Vocab", icon: <Icon name="tab-vocab" className="w-5 h-5" /> },
+      { id: "translate", label: "Translate", icon: <Icon name="tab-translate" className="w-5 h-5" /> },
+    ],
+    []
+  );
 
   const profileInitial = authUser?.email?.[0]?.toUpperCase() || null;
 
   return (
-    <div className="w-full min-h-screen bg-[#F5F5F7] dark:bg-black text-[#1D1D1F] dark:text-[#F5F5F7] flex flex-col items-center">
-      {/* Phone App Wrapper: mobile-first max-w-md on desktop, 100% on phone */}
-      <div className="w-full max-w-md min-h-screen bg-[#F5F5F7] dark:bg-black flex flex-col relative md:shadow-2xl md:border-x md:border-black/[0.06] dark:md:border-white/[0.08]">
-        {/* Yappi Top Navigation Bar */}
-        <header className="sticky top-0 z-30 material-thick border-b border-black/[0.06] dark:border-white/[0.08] px-4 py-2.5">
-          <div className="flex items-center justify-between gap-2">
-            {/* Yappi Brand Wordmark */}
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#007AFF] to-[#5856D6] dark:from-[#0A84FF] dark:to-[#5E5CE6] text-white flex items-center justify-center text-sm font-black shadow-xs shrink-0">
-                Y
-              </div>
-              <span className="text-base font-black tracking-tight text-[#1D1D1F] dark:text-[#F5F5F7]">
-                Yappi
-              </span>
-            </div>
+    <div className="w-full min-h-screen bg-canvas text-primary flex">
+      {/* Desktop Sidebar (visible on lg: screens ≥1024px) */}
+      <DesktopSidebar
+        tabs={navTabs}
+        activeTab={activeTab}
+        onSelectTab={setActiveTab}
+        currentLanguage={currentLang}
+        currentLangConfig={currentLangConfig}
+        onOpenLanguageSelector={() => setShowSettings(true)}
+        authUser={authUser}
+        syncStatus={syncStatus}
+        apiConnected={apiConnected}
+        streakCount={appState.streak?.count ?? 0}
+        learnedCount={learnedCount}
+        onOpenProfile={() => setShowAuthModal(true)}
+        onOpenSettings={() => setShowSettings(true)}
+      />
 
-            <div className="flex items-center gap-1.5 shrink-0">
-              {/* Compact Active Course Pill */}
-              <button
-                type="button"
-                onClick={() => setShowSettings(true)}
-                className="press-scale flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl bg-white dark:bg-[#0D0D10] border border-black/[0.08] dark:border-white/[0.10] shadow-xs cursor-pointer hover:border-[#58CC02]/40 transition-all"
-                title="Switch Language & Course Settings"
-              >
-                <span className="text-base leading-none">{currentLangConfig.flag}</span>
-                <span className="text-xs font-bold text-[#1D1D1F] dark:text-[#F5F5F7]">
-                  {currentLangConfig.name}
+      {/* Main Content Area: centered column with desktop sidebar margin */}
+      <div className="flex-1 lg:pl-64 flex flex-col items-center w-full min-h-screen">
+        <div className="w-full max-w-2xl lg:max-w-4xl min-h-screen flex flex-col relative">
+          {/* Mobile Top Navigation Bar (Hidden on desktop because sidebar owns header & switcher) */}
+          <header className="sticky top-0 z-30 glass-header px-4 sm:px-6 py-3 lg:hidden">
+            <div className="flex items-center justify-between gap-3">
+              {/* Minimal Brand Wordmark */}
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-title font-semibold tracking-tight text-primary">
+                  Yappi
                 </span>
-                <Icon name="chevron-down" className="w-3 h-3 text-[#86868B] dark:text-[#A1A1A6]" />
-              </button>
+                <span className="w-1.5 h-1.5 rounded-full bg-accent" aria-hidden="true" />
+              </div>
 
-              {/* Stop audio button if speaking */}
-              {isSpeaking && (
+              <div className="flex items-center gap-2 shrink-0">
+                {/* Course Switcher Pill */}
                 <button
                   type="button"
-                  onClick={stopSpeaking}
-                  className="press-scale px-2 py-1.5 rounded-2xl bg-[#007AFF] dark:bg-[#0A84FF] text-white text-[11px] font-black cursor-pointer shadow-xs"
+                  onClick={() => setShowSettings(true)}
+                  className="press-scale inline-flex items-center gap-2 min-h-[44px] px-3.5 py-1.5 rounded-full bg-surface text-primary border border-hairline hover:border-accent/40 shadow-xs cursor-pointer select-none transition-colors"
+                  title="Switch Language & Course Settings"
+                  aria-label={`Current language: ${currentLangConfig.name}. Tap to change language.`}
                 >
-                  Stop
+                  <span className="text-body leading-none">{currentLangConfig.flag}</span>
+                  <span className="text-caption font-semibold">
+                    {currentLangConfig.name}
+                  </span>
+                  <Icon name="chevron-down" className="w-3.5 h-3.5 text-muted" />
                 </button>
-              )}
 
-              {/* Profile & Settings button */}
-              <button
-                type="button"
-                onClick={() => setShowAuthModal(true)}
-                aria-label="Profile & Settings"
-                className={`press-scale w-9 h-9 rounded-2xl border flex items-center justify-center cursor-pointer relative shadow-xs transition-colors ${
-                  authUser
-                    ? "bg-[#007AFF]/10 dark:bg-[#0A84FF]/15 border-[#007AFF]/30 dark:border-[#0A84FF]/35 text-[#007AFF] dark:text-[#0A84FF]"
-                    : "bg-white dark:bg-[#0D0D10] border-black/[0.08] dark:border-white/[0.10] text-[#86868B] dark:text-[#F5F5F7] hover:text-[#1D1D1F] hover:bg-black/5 dark:hover:bg-white/10"
-                }`}
-                title={authUser ? `Profile · ${authUser.email}` : "Profile & Settings"}
-              >
-                {profileInitial ? (
-                  <span className="text-xs font-black">{profileInitial}</span>
-                ) : (
-                  <Icon name="user" className="w-4 h-4" />
+                {/* Stop audio button if speaking */}
+                {isSpeaking && (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={stopSpeaking}
+                    ariaLabel="Stop audio playback"
+                  >
+                    Stop
+                  </Button>
                 )}
-                {authUser ? (
-                  <span
-                    className={`w-2 h-2 rounded-full absolute top-1 right-1 ${
-                      syncStatus === "syncing"
-                        ? "bg-[#FF9600] animate-pulse"
-                        : syncStatus === "error"
-                        ? "bg-[#FF3B30]"
-                        : "bg-[#34C759]"
-                    }`}
-                  />
-                ) : (
-                  !apiConnected && (
-                    <span className="w-2 h-2 rounded-full bg-[#FF9600] absolute top-1 right-1" />
-                  )
-                )}
-              </button>
+
+                {/* Profile & Settings button */}
+                <button
+                  type="button"
+                  onClick={() => setShowAuthModal(true)}
+                  aria-label={authUser ? `Profile: ${authUser.email}` : "Profile & Settings"}
+                  className="press-scale relative w-11 h-11 min-h-[44px] min-w-[44px] rounded-full bg-surface border border-hairline flex items-center justify-center text-primary hover:bg-subtle transition-colors cursor-pointer select-none"
+                  title={authUser ? `Profile · ${authUser.email}` : "Profile & Settings"}
+                >
+                  {profileInitial ? (
+                    <span className="text-caption font-bold text-primary">{profileInitial}</span>
+                  ) : (
+                    <Icon name="user" className="w-4 h-4 text-muted" />
+                  )}
+                  {authUser ? (
+                    <span
+                      className={`w-2 h-2 rounded-full absolute top-1.5 right-1.5 ${
+                        syncStatus === "syncing"
+                          ? "bg-status-warning animate-pulse"
+                          : syncStatus === "error"
+                          ? "bg-status-error"
+                          : "bg-status-success"
+                      }`}
+                    />
+                  ) : (
+                    !apiConnected && (
+                      <span className="w-2 h-2 rounded-full bg-status-warning absolute top-1.5 right-1.5" />
+                    )
+                  )}
+                </button>
+              </div>
             </div>
-          </div>
-        </header>
+          </header>
 
-        {/* Main Phone Viewport Content */}
-        <main className="flex-1 px-4 py-3 pb-safe-bottom flex flex-col">
+          {/* Desktop Floating Audio Stop Pill if Speaking */}
+          {isSpeaking && (
+            <div className="hidden lg:block fixed top-5 right-6 z-50 animate-fade-in">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={stopSpeaking}
+                ariaLabel="Stop audio playback"
+              >
+                Stop Audio
+              </Button>
+            </div>
+          )}
+
+          {/* Main Viewport Content */}
+          <main className="flex-1 px-4 sm:px-6 py-4 pb-24 lg:pb-8 flex flex-col w-full">
           {activeTab === "chat" && (
             <ChatTab
               language={currentLang}
@@ -653,39 +708,12 @@ export default function App() {
           )}
         </main>
 
-        {/* iOS-Style Fixed Bottom Tab Bar */}
-        <nav className="fixed bottom-0 left-0 right-0 z-40 material-bottom-bar bottom-bar-safe">
-          <div className="max-w-md mx-auto grid grid-cols-4 px-2 py-1">
-            {tabs.map((tab) => {
-              const active = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setActiveTab(tab.id)}
-                  className="press-scale flex flex-col items-center justify-center py-1 cursor-pointer"
-                >
-                  <div
-                    className={`transition-colors ${
-                      active ? "text-[#007AFF] dark:text-[#0A84FF]" : "text-[#8E8E93]"
-                    }`}
-                  >
-                    <Icon name={tab.icon} className="w-5 h-5" />
-                  </div>
-                  <span
-                    className={`text-[10px] tracking-tight mt-0.5 ${
-                      active
-                        ? "text-[#007AFF] dark:text-[#0A84FF] font-bold"
-                        : "text-[#8E8E93] font-medium"
-                    }`}
-                  >
-                    {tab.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </nav>
+        {/* Apple-Style Minimal Fixed Bottom Tab Bar */}
+        <TabBar
+          tabs={navTabs}
+          activeTab={activeTab}
+          onSelectTab={setActiveTab}
+        />
 
         {/* Settings Bottom Sheet Modal */}
         {showSettings && (
@@ -761,5 +789,6 @@ export default function App() {
         )}
       </div>
     </div>
+  </div>
   );
 }
