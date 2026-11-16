@@ -518,46 +518,57 @@ Respond ONLY with raw JSON (no markdown):
           </div>
         )}
 
-        {/* Input Form */}
+        {/* Floating Input Dock (Matching Characters tab) */}
         <form
           onSubmit={(e) => {
             e.preventDefault();
             sendMessage();
           }}
-          className="flex items-center gap-2 p-1.5 rounded-2xl bg-surface border border-hairline shadow-xs"
+          className="rounded-full bg-surface border border-hairline shadow-md p-1.5 flex items-center gap-1.5"
         >
-          <button
-            type="button"
-            onClick={isListening ? stopVoiceInput : startVoiceInput}
-            aria-label={isListening ? "Stop listening" : `Speak in ${langName}`}
-            className={`press-scale w-11 h-11 min-h-[44px] min-w-[44px] rounded-xl flex items-center justify-center transition-colors cursor-pointer ${
-              isListening
-                ? "bg-status-error text-white"
-                : "text-muted hover:text-primary hover:bg-subtle"
-            }`}
-            title={isListening ? "Stop listening" : `Speak in ${langName}`}
-          >
-            <Icon name={isListening ? "stop" : "mic"} className="w-5 h-5" />
-          </button>
+          {speechSupported && (
+            <button
+              type="button"
+              onClick={isListening ? stopVoiceInput : startVoiceInput}
+              aria-label={isListening ? "Stop listening" : `Speak in ${langName}`}
+              className={`press-scale min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
+                isListening
+                  ? "bg-status-error text-white animate-pulse"
+                  : "text-muted hover:text-primary hover:bg-subtle"
+              }`}
+              title={isListening ? "Stop listening" : `Speak in ${langName}`}
+            >
+              <Icon name={isListening ? "stop" : "mic"} className="w-5 h-5" />
+            </button>
+          )}
 
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+              }
+            }}
             placeholder={`Type or speak in ${langName}…`}
-            className="flex-1 bg-transparent px-2 text-body text-primary placeholder:text-muted focus:outline-none"
+            disabled={isLoading}
+            className="flex-1 bg-transparent px-3 py-2 text-body text-primary placeholder:text-muted focus:outline-none"
           />
 
-          <Button
+          <button
             type="submit"
-            variant="primary"
-            size="icon"
             disabled={!input.trim() || isLoading}
-            ariaLabel="Send message"
-            className="rounded-xl shrink-0"
+            aria-label="Send message"
+            className={`press-scale min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center transition-colors shrink-0 ${
+              input.trim() && !isLoading
+                ? "bg-accent text-accent-contrast cursor-pointer"
+                : "text-muted/40 cursor-not-allowed"
+            }`}
           >
             <Icon name="send" className="w-4 h-4" />
-          </Button>
+          </button>
         </form>
       </div>
     </div>
