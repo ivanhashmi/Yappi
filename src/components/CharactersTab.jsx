@@ -57,6 +57,7 @@ export default function CharactersTab({
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [interimText, setInterimText] = useState("");
   const [speechError, setSpeechError] = useState("");
   const [apiError, setApiError] = useState("");
   const recognitionRef = useRef(null);
@@ -345,7 +346,7 @@ Respond ONLY with raw JSON matching this structure (no markdown):
 
   const startVoiceInput = () => {
     if (!speechSupported) {
-      setSpeechError("Speech recognition is not supported in this browser.");
+      setSpeechError("Speech recognition is not supported in this browser. Try Chrome, Edge, or Safari.");
       return;
     }
     setSpeechError("");
@@ -355,33 +356,73 @@ Respond ONLY with raw JSON matching this structure (no markdown):
       const rec = new SpeechClass();
       recognitionRef.current = rec;
 
-      rec.lang = settings?.accent || (langKey === "fr" ? "fr-FR" : langKey === "it" ? "it-IT" : "es-ES");
+      const langPrefix = langKey;
+      const accentMatches = settings?.accent && settings.accent.startsWith(langPrefix);
+      rec.lang = accentMatches
+        ? settings.accent
+        : (langKey === "fr" ? "fr-FR" : langKey === "it" ? "it-IT" : "es-ES");
       rec.continuous = false;
       rec.interimResults = true;
+      rec.maxAlternatives = 1;
 
-      rec.onstart = () => setIsListening(true);
+      rec.onstart = () => {
+        setIsListening(true);
+        setInterimText("");
+      };
+
       rec.onresult = (evt) => {
-        let transcript = "";
+        let interim = "";
+        let final = "";
         for (let i = evt.resultIndex; i < evt.results.length; i++) {
-          transcript += evt.results[i][0].transcript;
+          const item = evt.results[i];
+          if (item.isFinal) {
+            final += item[0].transcript;
+          } else {
+            interim += item[0].transcript;
+          }
         }
-        setInput(transcript);
+        if (final) {
+          setInput((prev) => (prev ? `${prev} ${final.trim()}` : final.trim()));
+          setInterimText("");
+        } else {
+          setInterimText(interim);
+        }
       };
-      rec.onerror = (e) => {
-        setSpeechError(`Voice error: ${e.error}`);
+
+      rec.onerror = (err) => {
         setIsListening(false);
+        setInterimText("");
+        if (err.error === "no-speech") {
+          return;
+        }
+        if (err.error === "not-allowed" || err.error === "service-not-allowed") {
+          setSpeechError("Microphone permission was denied. Please allow microphone access in your browser.");
+          return;
+        }
+        if (err.error === "network") {
+          setSpeechError("Network error during speech recognition. Please check your internet connection.");
+          return;
+        }
+        setSpeechError(`Voice error: ${err.error || "Could not recognize audio"}`);
       };
-      rec.onend = () => setIsListening(false);
+
+      rec.onend = () => {
+        setIsListening(false);
+        setInterimText("");
+      };
+
       rec.start();
-    } catch (e) {
-      setSpeechError("Microphone permission denied or unavailable.");
+    } catch {
       setIsListening(false);
+      setInterimText("");
+      setSpeechError("Microphone access could not be started.");
     }
   };
 
   const stopVoiceInput = () => {
     recognitionRef.current?.stop?.();
     setIsListening(false);
+    setInterimText("");
   };
 
   // --------------------------------------------------------------------------
@@ -395,7 +436,10 @@ Respond ONLY with raw JSON matching this structure (no markdown):
           <div className="flex items-center gap-3 min-w-0">
             <button
               type="button"
-              onClick={() => setActiveCharacterId(null)}
+              onClick={() => {
+                stopVoiceInput();
+                setActiveCharacterId(null);
+              }}
               className="press-scale min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center text-muted hover:text-primary hover:bg-subtle cursor-pointer transition-colors"
               aria-label="Back to Characters"
               title="Back"
@@ -589,7 +633,7 @@ Respond ONLY with raw JSON matching this structure (no markdown):
         </div>
 
         {/* Dynamic Starters Suggestions */}
-        {activeCharacter.starters && activeCharacter.starters.length > 0 && !isLoading && (
+        {activeCharacter.starters && activeCharacter.starters.length > 0 && !isLoading && !isListening && (
           <div className="py-2 flex items-center gap-2 overflow-x-auto no-scrollbar">
             {activeCharacter.starters.map((starter, i) => (
               <Chip
@@ -604,40 +648,73 @@ Respond ONLY with raw JSON matching this structure (no markdown):
           </div>
         )}
 
-        {/* Errors */}
-        {speechError && (
-          <div className="p-3 my-2 rounded-xl bg-status-error/10 text-status-error text-caption font-medium">
-            {speechError}
-          </div>
-        )}
-        {apiError && (
-          <div className="p-3 my-2 rounded-xl bg-status-warning/10 text-status-warning text-caption font-medium flex items-center justify-between">
-            <span>{apiError}</span>
-            <button
-              type="button"
-              onClick={onOpenSettings}
-              className="text-accent underline font-semibold ml-2 cursor-pointer"
-            >
-              Settings
-            </button>
-          </div>
-        )}
+        {/* Floating Input Dock Area (Sticky Bottom) */}
+        <div className="space-y-2 sticky bottom-0 bg-canvas/80 backdrop-blur-md pt-2 pb-1 z-20">
+          {speechError && (
+            <div className="text-caption text-status-error bg-status-error/10 px-3.5 py-1.5 rounded-xl border border-status-error/20 flex items-center justify-between">
+              <span>{speechError}</span>
+              <button
+                type="button"
+                onClick={() => setSpeechError("")}
+                className="text-status-error font-semibold ml-2 cursor-pointer hover:underline text-caption"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
 
-        {/* Floating Input Dock */}
-        <div className="sticky bottom-0 z-20 pt-2 pb-20 sm:pb-6">
+          {apiError && (
+            <div className="p-3 rounded-xl bg-status-warning/10 text-status-warning text-caption font-medium flex items-center justify-between">
+              <span>{apiError}</span>
+              <button
+                type="button"
+                onClick={onOpenSettings}
+                className="text-accent underline font-semibold ml-2 cursor-pointer"
+              >
+                Settings
+              </button>
+            </div>
+          )}
+
+          {isListening && (
+            <div className="p-3 rounded-2xl bg-subtle border border-hairline flex items-center justify-between animate-fade-in">
+              <div className="flex items-center gap-2 min-w-0 pr-2">
+                <span className="w-2 h-2 rounded-full bg-status-error animate-ping shrink-0" />
+                <span className="text-caption font-medium text-primary truncate">
+                  {interimText ? `"${interimText}"` : `Listening in ${langName}… speak now`}
+                </span>
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={stopVoiceInput}
+              >
+                Done
+              </Button>
+            </div>
+          )}
+
           <div className="rounded-full bg-surface border border-hairline shadow-md p-1.5 flex items-center gap-1.5">
             {speechSupported && (
               <button
                 type="button"
-                onClick={isListening ? stopVoiceInput : startVoiceInput}
+                onClick={() => {
+                  triggerHaptic("selection");
+                  if (isListening) {
+                    stopVoiceInput();
+                  } else {
+                    startVoiceInput();
+                  }
+                }}
                 aria-label={isListening ? "Stop listening" : `Speak in ${langName}`}
                 className={`press-scale min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
                   isListening
                     ? "bg-status-error text-white animate-pulse"
                     : "text-muted hover:text-primary hover:bg-subtle"
                 }`}
+                title={isListening ? "Stop listening" : `Speak in ${langName}`}
               >
-                <Icon name="mic" className="w-5 h-5" />
+                <Icon name={isListening ? "stop" : "mic"} className="w-5 h-5" />
               </button>
             )}
 

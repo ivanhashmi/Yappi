@@ -179,9 +179,11 @@ Respond ONLY with raw JSON (no markdown):
       const rec = new SpeechClass();
       recognitionRef.current = rec;
 
-      rec.lang =
-        settings.accent ||
-        (language === "fr" ? "fr-FR" : language === "it" ? "it-IT" : "es-ES");
+      const langPrefix = language === "fr" ? "fr" : language === "it" ? "it" : "es";
+      const accentValid = settings?.accent && settings.accent.startsWith(langPrefix);
+      rec.lang = accentValid
+        ? settings.accent
+        : (language === "fr" ? "fr-FR" : language === "it" ? "it-IT" : "es-ES");
       rec.continuous = false;
       rec.interimResults = true;
       rec.maxAlternatives = 1;
@@ -213,9 +215,18 @@ Respond ONLY with raw JSON (no markdown):
       rec.onerror = (err) => {
         setIsListening(false);
         setInterimText("");
-        if (err.error !== "no-speech") {
-          setSpeechError(`Voice error: ${err.error || "Could not recognize audio"}`);
+        if (err.error === "no-speech") {
+          return;
         }
+        if (err.error === "not-allowed" || err.error === "service-not-allowed") {
+          setSpeechError("Microphone permission was denied. Please allow microphone access in your browser.");
+          return;
+        }
+        if (err.error === "network") {
+          setSpeechError("Network error during speech recognition. Please check your internet connection.");
+          return;
+        }
+        setSpeechError(`Voice error: ${err.error || "Could not recognize audio"}`);
       };
 
       rec.onend = () => {
@@ -226,6 +237,7 @@ Respond ONLY with raw JSON (no markdown):
       rec.start();
     } catch {
       setIsListening(false);
+      setInterimText("");
       setSpeechError("Microphone access could not be started.");
     }
   };
@@ -529,7 +541,14 @@ Respond ONLY with raw JSON (no markdown):
           {speechSupported && (
             <button
               type="button"
-              onClick={isListening ? stopVoiceInput : startVoiceInput}
+              onClick={() => {
+                triggerHaptic("selection");
+                if (isListening) {
+                  stopVoiceInput();
+                } else {
+                  startVoiceInput();
+                }
+              }}
               aria-label={isListening ? "Stop listening" : `Speak in ${langName}`}
               className={`press-scale min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
                 isListening
