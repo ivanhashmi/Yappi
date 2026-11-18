@@ -1,19 +1,19 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Icon from "./Icon";
-import { Chip, Button } from "./ui";
-import { SCENARIOS_DATA } from "../data/languages";
+import { Button, Avatar } from "./ui";
 import { callAI, extractJson, buildFallbackTutorReply } from "../services/gemini";
 import { triggerHaptic } from "../utils/haptics";
 
 /* ============================================================================
- * TAB 1: CHAT — Apple / Google Minimal AI Voice Tutor
+ * TAB 1: TUTOR — Personal Language Mentor, Grammar & Progress Guide
  * ========================================================================== */
 export default function ChatTab({
   language = "es",
-  chats,
-  activeScenarioId,
-  setActiveScenarioId,
-  settings,
+  chats = {},
+  settings = {},
+  streak = { count: 0, lastActiveDate: null },
+  learnedWords = {},
+  customDecks = [],
   apiConnected,
   speakSpanish,
   recordPractice,
@@ -33,19 +33,119 @@ export default function ChatTab({
     setRevealedIds((prev) => ({ ...prev, [id]: !prev[id] }));
   }, []);
 
-  const scenarios = SCENARIOS_DATA[language] || SCENARIOS_DATA.es;
   const langName = language === "fr" ? "French" : language === "it" ? "Italian" : "Spanish";
+  const tutorName = language === "fr" ? "Amélie" : language === "it" ? "Chiara" : "Sofía";
 
   const recognitionRef = useRef(null);
   const endRef = useRef(null);
 
-  const scenario = useMemo(
-    () => scenarios.find((s) => s.id === activeScenarioId) || scenarios[0],
-    [scenarios, activeScenarioId]
-  );
+  // Normalize student streak and saved vocabulary progress stats
+  const streakCount = typeof streak?.count === "number" ? streak.count : 0;
+  const savedWordsList = useMemo(() => Object.values(learnedWords || {}), [learnedWords]);
+  const learnedCount = savedWordsList.length;
 
-  const chatKey = `${language}_${activeScenarioId}`;
-  const messages = chats[chatKey] || chats[activeScenarioId] || [];
+  const progressContext = useMemo(() => {
+    const wordsPreview = savedWordsList
+      .slice(0, 30)
+      .map((w) => `${w.spanish || w.word || ""}${w.english ? ` (${w.english})` : ""}`)
+      .filter(Boolean)
+      .join(", ");
+
+    const customCardsTotal = (customDecks || []).reduce(
+      (sum, d) => sum + (Array.isArray(d.cards) ? d.cards.length : 0),
+      0
+    );
+
+    return `
+[STUDENT REAL-TIME PROGRESS CONTEXT]
+- Active Course: ${langName} (${language})
+- Current Streak: ${streakCount} ${streakCount === 1 ? "day" : "days"} (Last practiced: ${streak?.lastActiveDate || "Today"})
+- Total Saved / Learned Words: ${learnedCount}
+${learnedCount > 0 ? `- Saved Words List (sample of up to 30 words): ${wordsPreview}` : "- Saved Words List: Currently 0 saved words (encourage the student to save cards from Flashcards)."}
+${customCardsTotal > 0 ? `- Custom Flashcard Decks: ${customDecks.length} deck(s) with ${customCardsTotal} custom cards` : ""}`;
+  }, [language, langName, streakCount, streak?.lastActiveDate, learnedCount, savedWordsList, customDecks]);
+
+  // Initial greeting welcoming user to ask doubts or review progress
+  const defaultOpening = useMemo(() => {
+    if (language === "fr") {
+      return {
+        id: `init-tutor-fr`,
+        sender: "tutor",
+        spanish:
+          "Bonjour ! Je suis Amélie, votre tutrice personnelle de français. Avez-vous une question de grammaire, ou voulez-vous réviser votre vocabulaire et vos progrès aujourd'hui ?",
+        pronunciation:
+          "bohn-ZHOOR! zhuh swee ah-may-LEE, vohtr too-TREES pehr-sohn-NEHL duh frahn-SAY. ah-vay-VOO oon kehs-TYOHN duh grah-MEHR, oo voo-lay-VOO ray-vee-ZAY vohtr voh-kah-boo-LEHR ay voh proh-GREH oh-zhoor-DWEE?",
+        english:
+          "Hello! I am Amélie, your personal French tutor. Do you have a grammar question, or would you like to review your saved vocabulary and progress today?",
+        correction: null,
+        suggested_replies: [
+          "Review my progress",
+          "Explain a grammar rule",
+          "Quiz me on my saved vocab",
+          "When to use 'c'est' vs 'il est'?",
+        ],
+        mode: "preset",
+        timestamp: Date.now(),
+      };
+    }
+    if (language === "it") {
+      return {
+        id: `init-tutor-it`,
+        sender: "tutor",
+        spanish:
+          "Ciao! Sono Chiara, la tua tutor personale di italiano. Hai un dubbio di grammatica, o vuoi ripassare i vocaboli salvati e i tuoi progressi oggi?",
+        pronunciation:
+          "CHOW! SOH-noh KYAH-rah, lah TOO-ah TOO-tohr pehr-soh-NAH-lay dee ee-tahl-YAH-noh. eye oon DOOB-byoh dee grahm-MAH-tee-kah, oh vwoy reep-pah-SAH-ray ee voh-KAH-boh-lee sahl-VAH-tee ay ee TWO-ee proh-GREHS-see OH-jee?",
+        english:
+          "Hello! I am Chiara, your personal Italian tutor. Do you have a grammar doubt, or would you like to review your saved vocabulary and progress today?",
+        correction: null,
+        suggested_replies: [
+          "Review my progress",
+          "Explain a grammar rule",
+          "Quiz me on my saved vocab",
+          "When to use 'essere' vs 'avere'?",
+        ],
+        mode: "preset",
+        timestamp: Date.now(),
+      };
+    }
+    return {
+      id: `init-tutor-es`,
+      sender: "tutor",
+      spanish:
+        "¡Hola! Soy Sofía, tu tutora personal de español. ¿Tienes alguna duda de gramática, quieres repasar tu vocabulario guardado o revisar tu progreso hoy?",
+      pronunciation:
+        "¡OH-lah! soy soh-FEE-ah, too too-TOH-rah pehr-soh-NAHL deh ehs-pah-NYOHL. ¿TYEH-nehs ahl-GOO-nah DOO-dah deh grah-MAH-tee-kah, KYEH-rehs reh-pah-SAHR too boh-kah-boo-LAH-ryoh gwahr-DAH-doh oh reh-bee-SAHR too proh-GREH-soh oy?",
+      english:
+        "Hello! I'm Sofía, your personal Spanish tutor. Do you have a grammar question, want to review your saved vocabulary, or check your progress today?",
+      correction: null,
+      suggested_replies: [
+        "Review my progress",
+        "Explain a grammar rule",
+        "Quiz me on my saved vocab",
+        "Why use 'por' vs 'para'?",
+      ],
+      mode: "preset",
+      timestamp: Date.now(),
+    };
+  }, [language]);
+
+  const defaultStarters = useMemo(() => {
+    return [
+      "Review my progress",
+      "Explain a grammar rule",
+      "Quiz me on my saved vocab",
+      language === "es"
+        ? "Why use 'por' vs 'para'?"
+        : language === "fr"
+        ? "When to use 'c'est' vs 'il est'?"
+        : "When to use 'essere' vs 'avere'?",
+    ];
+  }, [language]);
+
+  const chatKey = `${language}_tutor`;
+  const messages =
+    chats[chatKey] && chats[chatKey].length > 0 ? chats[chatKey] : [defaultOpening];
 
   const speechSupported =
     typeof window !== "undefined" &&
@@ -91,20 +191,27 @@ export default function ChatTab({
           content: m.sender === "user" ? m.text : `${m.spanish} (${m.english})`,
         }));
 
-        const systemPrompt = `You are a warm, patient ${langName} tutor speaking with an A1 BEGINNER student on mobile.
-Scenario: "${scenario.title}" (${scenario.role}).
+        const systemPrompt = `You are ${tutorName}, a warm, patient, and expert personal ${langName} tutor and mentor speaking with a student.
+You do NOT do roleplays here (roleplay scenarios belong in the Characters tab). Your sole mission is:
+1. Clearing student doubts about ${langName} grammar, word usage, idioms, pronunciation, and syntax.
+2. Explaining grammar rules clearly in simple English, providing natural ${langName} examples with pronunciation and English translations.
+3. Reviewing student learning progress, praising their streak, and quizzing them on their saved vocabulary when requested.
+4. Answering questions asked in either English or ${langName}. If the student asks in English, answer warmly in English while providing ${langName} examples with phonetics. If they write in ${langName}, praise them and gently correct any grammar mistakes.
+
+${progressContext}
+
 Respond ONLY with raw JSON (no markdown):
 {
-  "spanish": "Natural beginner ${langName} reply (1-2 sentences + 1 simple question)",
-  "pronunciation": "Syllable phonetic guide with CAPS on stressed syllables",
-  "english": "Clear English translation",
+  "spanish": "Your spoken reply in ${langName} (1-3 sentences with natural examples or encouraging guidance)",
+  "pronunciation": "Syllable phonetic guide for the ${langName} text with CAPS on stressed syllables",
+  "english": "Comprehensive English explanation or direct answer to the student's doubt/progress inquiry",
   "correction": {
     "has_mistake": true or false,
-    "original": "User text",
-    "corrected_spanish": "Natural beginner ${langName} phrasing",
-    "explanation": "Short 1-sentence beginner grammar explanation in English"
+    "original": "Student text if there was a grammar/spelling error in ${langName}",
+    "corrected_spanish": "Natural correct ${langName} phrasing",
+    "explanation": "Brief 1-sentence grammar rule explanation in English"
   },
-  "suggested_replies": ["2 short beginner replies in ${langName}"]
+  "suggested_replies": ["3 short, relevant doubt/progress quick-prompts (e.g. 'Review my progress', 'Give another example', 'Quiz me on my vocab')"]
 }`;
 
         const raw = await callAI({
@@ -118,7 +225,7 @@ Respond ONLY with raw JSON (no markdown):
         setApiError("");
       } catch (err) {
         replyMode = "practice";
-        replyData = buildFallbackTutorReply(rawText, activeScenarioId, language);
+        replyData = buildFallbackTutorReply(rawText, "tutor", language);
         if (err.code !== "NO_API_KEY") {
           setApiError(err.message);
         }
@@ -156,10 +263,10 @@ Respond ONLY with raw JSON (no markdown):
       isLoading,
       messages,
       chatKey,
-      activeScenarioId,
-      scenario,
+      tutorName,
       langName,
       language,
+      progressContext,
       settings,
       onUpdateChat,
       speakSpanish,
@@ -169,7 +276,7 @@ Respond ONLY with raw JSON (no markdown):
 
   const startVoiceInput = () => {
     if (!speechSupported) {
-      setSpeechError("Speech recognition is not supported in this browser. Try Chrome or Safari.");
+      setSpeechError("Speech recognition is not supported in this browser. Try Chrome, Edge, or Safari.");
       return;
     }
     setSpeechError("");
@@ -245,23 +352,20 @@ Respond ONLY with raw JSON (no markdown):
   const stopVoiceInput = () => {
     recognitionRef.current?.stop?.();
     setIsListening(false);
+    setInterimText("");
   };
 
-  const resetScenarioChat = () => {
+  const resetTutorChat = () => {
+    triggerHaptic("medium");
     onUpdateChat(chatKey, [
       {
+        ...defaultOpening,
         id: `init-${chatKey}-${Date.now()}`,
-        sender: "tutor",
-        spanish: scenario.opening.spanish,
-        pronunciation: scenario.opening.pronunciation,
-        english: scenario.opening.english,
-        correction: null,
-        mode: "preset",
         timestamp: Date.now(),
       },
     ]);
     if (settings.autoSpeak) {
-      speakSpanish(scenario.opening.spanish);
+      speakSpanish(defaultOpening.spanish);
     }
   };
 
@@ -276,33 +380,55 @@ Respond ONLY with raw JSON (no markdown):
         return msg.suggested_replies;
       }
     }
-    return scenario.starters || [];
-  }, [messages, scenario.starters]);
+    return defaultStarters;
+  }, [messages, defaultStarters]);
 
   return (
     <div className="flex flex-col h-full flex-1 max-w-2xl mx-auto w-full">
-      {/* Scenario Picker Strip */}
-      <div className="space-y-3 mb-4">
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
-          {scenarios.map((sc) => {
-            const active = sc.id === activeScenarioId;
-            return (
-              <Chip
-                key={sc.id}
-                active={active}
-                onClick={() => {
-                  triggerHaptic("selection");
-                  setActiveScenarioId(sc.id);
-                }}
-              >
-                {sc.title}
-              </Chip>
-            );
-          })}
+      {/* Tutor Identity Header & Controls */}
+      <div className="mb-4 space-y-2.5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <Avatar name={tutorName} size="md" />
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h2 className="text-headline font-semibold text-primary truncate leading-tight">
+                  {tutorName}
+                </h2>
+                <span className="text-overline font-semibold uppercase tracking-wider text-accent bg-accent/10 px-2 py-0.5 rounded-full">
+                  Personal Tutor
+                </span>
+              </div>
+              <p className="text-caption text-muted truncate mt-0.5">
+                Progress mentor, grammar explanations & doubts
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={onToggleAutoSpeak}
+              className="press-scale min-h-[36px] px-2.5 rounded-xl border border-hairline bg-surface hover:bg-subtle inline-flex items-center gap-1.5 text-caption font-medium text-muted hover:text-primary cursor-pointer transition-colors"
+              title="Toggle automatic speech synthesis"
+            >
+              <Icon name="volume" className="w-3.5 h-3.5" />
+              <span>Audio {settings.autoSpeak ? "On" : "Off"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={resetTutorChat}
+              className="press-scale min-h-[36px] px-2.5 rounded-xl border border-hairline bg-surface hover:bg-subtle inline-flex items-center gap-1.5 text-caption font-medium text-muted hover:text-primary cursor-pointer transition-colors"
+              title="Restart conversation"
+            >
+              <Icon name="refresh" className="w-3.5 h-3.5" />
+              <span>Restart</span>
+            </button>
+          </div>
         </div>
 
-        {/* Quiet Sub-bar: Status & Controls */}
-        <div className="flex items-center justify-between text-caption text-muted px-1">
+        {/* Quiet Sub-bar: Real-time Stats & AI status */}
+        <div className="flex items-center justify-between text-caption text-muted px-1 pt-1.5 border-t border-hairline">
           <div className="flex items-center gap-2">
             <span
               className={`w-2 h-2 rounded-full ${
@@ -314,25 +440,10 @@ Respond ONLY with raw JSON (no markdown):
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={onToggleAutoSpeak}
-              className="press-scale inline-flex items-center gap-1 font-medium text-muted hover:text-primary cursor-pointer"
-              title="Toggle automatic speech synthesis"
-            >
-              <Icon name="volume" className="w-3.5 h-3.5" />
-              <span>Audio {settings.autoSpeak ? "On" : "Off"}</span>
-            </button>
-            <button
-              type="button"
-              onClick={resetScenarioChat}
-              className="press-scale inline-flex items-center gap-1 font-medium text-muted hover:text-primary cursor-pointer"
-              title="Restart conversation"
-            >
-              <Icon name="refresh" className="w-3.5 h-3.5" />
-              <span>Restart</span>
-            </button>
+          <div className="flex items-center gap-3 text-caption text-muted font-medium">
+            <span>🔥 {streakCount}d streak</span>
+            <span>·</span>
+            <span>📚 {learnedCount} saved words</span>
           </div>
         </div>
       </div>
@@ -370,7 +481,7 @@ Respond ONLY with raw JSON (no markdown):
                 {/* Header: Persona Name & Audio Controls */}
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-overline tracking-wider text-accent font-semibold">
-                    {scenario.role}
+                    {tutorName} · Personal Tutor
                   </span>
                   <div className="flex items-center gap-1">
                     <button
@@ -481,7 +592,7 @@ Respond ONLY with raw JSON (no markdown):
               <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse [animation-delay:200ms]" />
               <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse [animation-delay:400ms]" />
             </span>
-            <span>Tutor is thinking…</span>
+            <span>{tutorName} is thinking…</span>
           </div>
         )}
 
@@ -491,16 +602,23 @@ Respond ONLY with raw JSON (no markdown):
       {/* Floating Bottom Input Bar */}
       <div className="space-y-2 sticky bottom-0 bg-canvas/80 backdrop-blur-md pt-2 pb-1">
         {speechError && (
-          <div className="text-caption text-status-error bg-status-error/10 px-3.5 py-1.5 rounded-xl border border-status-error/20">
-            {speechError}
+          <div className="text-caption text-status-error bg-status-error/10 px-3.5 py-1.5 rounded-xl border border-status-error/20 flex items-center justify-between">
+            <span>{speechError}</span>
+            <button
+              type="button"
+              onClick={() => setSpeechError("")}
+              className="text-status-error font-semibold ml-2 cursor-pointer hover:underline text-caption"
+            >
+              Dismiss
+            </button>
           </div>
         )}
 
         {isListening && (
-          <div className="p-3 rounded-2xl bg-subtle border border-hairline flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-status-error animate-ping" />
-              <span className="text-caption font-medium text-primary">
+          <div className="p-3 rounded-2xl bg-subtle border border-hairline flex items-center justify-between animate-fade-in">
+            <div className="flex items-center gap-2 min-w-0 pr-2">
+              <span className="w-2 h-2 rounded-full bg-status-error animate-ping shrink-0" />
+              <span className="text-caption font-medium text-primary truncate">
                 {interimText ? `"${interimText}"` : `Listening in ${langName}… speak now`}
               </span>
             </div>
@@ -514,7 +632,7 @@ Respond ONLY with raw JSON (no markdown):
           </div>
         )}
 
-        {/* Dynamic Suggested Replies */}
+        {/* Dynamic Suggested Doubt & Progress Quick-Prompts */}
         {latestSuggestions.length > 0 && !isListening && (
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
             {latestSuggestions.map((s, idx) => (
@@ -530,7 +648,7 @@ Respond ONLY with raw JSON (no markdown):
           </div>
         )}
 
-        {/* Floating Input Dock (Matching Characters tab) */}
+        {/* Floating Input Dock */}
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -571,7 +689,7 @@ Respond ONLY with raw JSON (no markdown):
                 sendMessage();
               }
             }}
-            placeholder={`Type or speak in ${langName}…`}
+            placeholder={`Ask a ${langName} doubt in English or ${langName}…`}
             disabled={isLoading}
             className="flex-1 bg-transparent px-3 py-2 text-body text-primary placeholder:text-muted focus:outline-none"
           />

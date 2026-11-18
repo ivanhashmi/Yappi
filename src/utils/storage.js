@@ -46,6 +46,40 @@ export function createInitialChats(lang = "es") {
         },
       ];
     }
+    // Dedicated personal tutor chat thread
+    const tutorKey = `${l.id}_tutor`;
+    chats[tutorKey] = [
+      {
+        id: `init-${tutorKey}`,
+        sender: "tutor",
+        spanish:
+          l.id === "fr"
+            ? "Bonjour ! Je suis Amélie, votre tutrice personnelle de français. Avez-vous une question de grammaire, ou voulez-vous réviser votre vocabulaire et vos progrès aujourd'hui ?"
+            : l.id === "it"
+            ? "Ciao! Sono Chiara, la tua tutor personale di italiano. Hai un dubbio di grammatica, o vuoi ripassare i vocaboli salvati e i tuoi progressi oggi?"
+            : "¡Hola! Soy Sofía, tu tutora personal de español. ¿Tienes alguna duda de gramática, quieres repasar tu vocabulario guardado o revisar tu progreso hoy?",
+        pronunciation:
+          l.id === "fr"
+            ? "bohn-ZHOOR! zhuh swee ah-may-LEE, vohtr too-TREES pehr-sohn-NEHL duh frahn-SAY. ah-vay-VOO oon kehs-TYOHN duh grah-MEHR..."
+            : l.id === "it"
+            ? "CHOW! SOH-noh KYAH-rah, lah TOO-ah TOO-tohr pehr-soh-NAH-lay dee ee-tahl-YAH-noh. eye oon DOOB-byoh dee grahm-MAH-tee-kah..."
+            : "¡OH-lah! soy soh-FEE-ah, too too-TOH-rah pehr-soh-NAHL deh ehs-pah-NYOHL. ¿TYEH-nehs ahl-GOO-nah DOO-dah deh grah-MAH-tee-kah, KYEH-rehs reh-pah-SAHR too boh-kah-boo-LAH-ryoh gwahr-DAH-doh oh reh-bee-SAHR too proh-GREH-soh oy?",
+        english:
+          l.id === "fr"
+            ? "Hello! I am Amélie, your personal French tutor. Do you have a grammar question, or would you like to review your vocabulary and progress today?"
+            : l.id === "it"
+            ? "Hello! I am Chiara, your personal Italian tutor. Do you have a grammar doubt, or would you like to review your saved vocabulary and progress today?"
+            : "Hello! I'm Sofía, your personal Spanish tutor. Do you have a grammar question, want to review your saved vocabulary, or check your progress today?",
+        correction: null,
+        suggested_replies: [
+          "Review my progress",
+          "Explain a grammar rule",
+          "Quiz me on my saved vocab",
+        ],
+        mode: "preset",
+        timestamp: Date.now(),
+      },
+    ];
   }
   return chats;
 }

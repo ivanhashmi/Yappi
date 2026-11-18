@@ -248,9 +248,13 @@ export function buildFallbackTutorReply(userInput, scenarioId, lang = "es") {
         { spanish: "Eccellente! Sono molto felice di parlare con te. Cosa hai fatto di bello oggi?", pronunciation: "ehch-chehl-LEHN-teh! SOH-noh MOHL-toh feh-LEE-cheh dee pahr-LAH-reh kohn teh...", english: "Excellent! I'm very happy to speak with you. What did you do today?", starters: ["Ho studiato e preso un caffè", "Ho fatto una bella passeggiata"] },
         { spanish: "Fantastico! Fare pratica ogni giorno è il segreto per imparare bene l'italiano.", pronunciation: "fahn-TAHS-tee-koh! FAH-reh PRAH-tee-kah OHN-yee JOHR-noh...", english: "Fantastic! Practicing every day is the secret to learning Italian well.", starters: ["Mi piace ascoltare musica", "Leggere libri in italiano"] },
       ],
+      tutor: [
+        { spanish: "Ottima domanda! Ricorda che fare pratica ogni giorno e ripassare i vocaboli salvati è il segreto per dominare l'italiano.", pronunciation: "OHT-tee-mah doh-MAHN-dah! ree-KOHR-dah keh FAH-reh PRAH-tee-kah OHN-yee JOHR-noh ee ree-pahs-SAH-reh ee voh-KAH-boh-lee sahl-VAH-tee eh eel seh-GREH-toh PAH-rah doh-mee-NAH-reh leeh-tahl-YAH-noh.", english: "Great question! Remember that regular daily practice and reviewing saved vocabulary is the key to mastering Italian. What doubt or grammar topic can we explore?", starters: ["Review my progress", "Explain a grammar rule", "Quiz me on my saved vocab"] },
+        { spanish: "Benissimo! In italiano, fai attenzione all'accordo tra aggettivi e sostantivi: per esempio 'il ragazzo italiano' e 'la ragazza italiana'. Vuoi fare un quiz?", pronunciation: "beh-NEES-see-moh! een ee-tahl-YAH-noh, fye aht-tehn-ZYOH-neh ahl-lahk-KOHR-doh trah ahd-jeht-TEE-vee ee sohs-tahn-TEE-vee...", english: "Very good! In Italian, pay attention to gender and number agreement between nouns and adjectives. Would you like to do a quick quiz?", starters: ["Review my progress", "Explain a grammar rule", "Quiz me on my saved vocab"] },
+      ],
     };
 
-    const pool = replies[cleanScId] || replies.free;
+    const pool = replies[cleanScId] || (cleanScId === "tutor" ? replies.tutor : replies.free);
     const pick = pool[raw.length % pool.length];
 
     return {
@@ -286,9 +290,13 @@ export function buildFallbackTutorReply(userInput, scenarioId, lang = "es") {
         { spanish: "Excellent ! Je suis très contente. Qu'as-tu fait aujourd'hui ?", pronunciation: "ehk-seh-LAHN! zhuh swee tray kohn-TAHNT. kah-too feh oh-zhoor-DWEE?", english: "Excellent! I am very glad. What did you do today?", starters: ["J'ai pris un café et étudié", "J'ai travaillé un peu"] },
         { spanish: "C'est super ! Pratiquer un peu chaque jour aide énormément.", pronunciation: "say soo-PEHR! prah-tee-KAY uhn peu shahk zhoor ed ay-nohr-may-MAHN.", english: "That's great! Practicing a little every day helps enormously.", starters: ["J'aime écouter de la musique", "Lire des livres"] },
       ],
+      tutor: [
+        { spanish: "Excellente question ! N'oubliez pas que pratiquer régulièrement et réviser vos mots enregistrés est la clé pour progresser en français.", pronunciation: "ehk-seh-LAHN-tuh kehs-TYOHN! noo-blee-ay PAH kuh prah-tee-KAY ray-gyoo-lyehr-MAHN ay ray-vee-ZAY voh moh z-ahn-ruh-zhees-TRAY ay lah klay...", english: "Excellent question! Remember that regular practice and reviewing your saved vocabulary is the key to mastering French. What topic or doubt can I help explain?", starters: ["Review my progress", "Explain a grammar rule", "Quiz me on my saved vocab"] },
+        { spanish: "Très bien ! Une règle essentielle : on utilise 'c'est' devant un nom ou un groupe nominal, et 'il est' devant un adjectif qualificatif seul. Voulez-vous d'autres exemples ?", pronunciation: "tray byan! oon REG-luh eh-sahn-SYEL: ohn oo-tee-LEEZ say duh-VAHN uhn nohn...", english: "Very well! An essential grammar rule: use 'c'est' before a noun phrase ('C'est un ami'), and 'il est' before a standalone adjective ('Il est gentil'). Would you like more examples?", starters: ["Review my progress", "Explain a grammar rule", "Quiz me on my saved vocab"] },
+      ],
     };
 
-    const pool = replies[cleanScId] || replies.free;
+    const pool = replies[cleanScId] || (cleanScId === "tutor" ? replies.tutor : replies.free);
     const pick = pool[raw.length % pool.length];
 
     return {
@@ -343,9 +351,29 @@ export function buildFallbackTutorReply(userInput, scenarioId, lang = "es") {
       { spanish: "¡Excelente! Me alegro mucho. ¿Qué hiciste hoy?", pronunciation: "ehk-seh-LEHN-teh! meh ah-LEH-groh MOO-choh. keh ee-SEES-teh oy?", english: "Excellent! I'm very glad. What did you do today?", starters: ["Tomé café y estudié", "Trabajé un poco"] },
       { spanish: "¡Qué bien! Practicar todos los días ayuda mucho. ¿Qué te gusta hacer?", pronunciation: "keh byehn! prahk-tee-KAHR TOH-dohs lohs DEE-ahs ah-YOO-dah MOO-choh.", english: "How nice! Practicing every day helps a lot. What do you like to do?", starters: ["Me gusta escuchar música", "Leer libros"] },
     ],
+    tutor: [
+      {
+        spanish: "¡Excelente pregunta! Mantener tu racha diaria y repasar las palabras guardadas es la clave para dominar el español. ¿Quieres que revisemos tu progreso o tus dudas?",
+        pronunciation: "ehk-seh-LEHN-teh preh-GOON-tah! mahn-teh-NEHR too RAH-chah DYAHR-yah ee reh-pah-SAHR lahs pah-LAH-brahs gwahr-DAH-dahs ehs lah KLAH-beh PAH-rah doh-mee-NAHR ehl ehs-pah-NYOHL. ¿KYEH-rehs keh reh-bee-SEH-mohs too proh-GREH-soh oh toos DOO-dahs?",
+        english: "Great question! Keeping your daily streak and reviewing your saved words is the secret to mastering Spanish. Would you like to check your progress or ask a grammar question?",
+        starters: ["Review my progress", "Explain a grammar rule", "Quiz me on my saved vocab"],
+      },
+      {
+        spanish: "¡Muy bien! Un consejo de oro: usa 'por' para motivos o duración ('por la mañana'), y 'para' para objetivos o destinos ('para ti'). ¿Quieres que veamos más ejemplos?",
+        pronunciation: "mooy byehn! oon kohn-SEH-hoh deh OH-roh: OO-sah pohr PAH-rah moh-TEE-bohs oh doo-rah-SYOHN, ee PAH-rah PAH-rah ohb-heh-TEE-bohs oh dehs-TEE-nohs. ¿KYEH-rehs keh beh-AH-mohs MAHS eh-HEHM-plohs?",
+        english: "Very good! A golden grammar tip: use 'por' for motives or duration ('por la mañana'), and 'para' for goals or recipients ('para ti'). Would you like to see more examples?",
+        starters: ["Review my progress", "Explain a grammar rule", "Quiz me on my saved vocab"],
+      },
+      {
+        spanish: "¡Genial! Tu constancia diaria es excelente. ¿Tienes alguna duda sobre conjugaciones, tiempos verbales o cómo usar alguna palabra guardada?",
+        pronunciation: "heh-NYAHL! too kohn-STAHN-syah DYAHR-yah ehs ehk-seh-LEHN-teh. ¿TYEH-nehs ahl-GOO-nah DOO-dah SOH-breh kohn-hoo-gah-SYOH-nehs, TYEHM-pohs behr-BAH-lehs oh KOH-moh oo-SAHR ahl-GOO-nah pah-LAH-brah gwahr-DAH-dah?",
+        english: "Awesome! Your daily practice consistency is great. Do you have any doubts about verb conjugations, tenses, or how to use a saved vocabulary word?",
+        starters: ["Review my progress", "Explain a grammar rule", "Quiz me on my saved vocab"],
+      },
+    ],
   };
 
-  const pool = replies[cleanScId] || replies.free;
+  const pool = replies[cleanScId] || (cleanScId === "tutor" ? replies.tutor : replies.free);
   const pick = pool[raw.length % pool.length];
 
   return {

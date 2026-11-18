@@ -623,9 +623,10 @@ export default function App() {
             <ChatTab
               language={currentLang}
               chats={appState.chats}
-              activeScenarioId={activeScenarioId}
-              setActiveScenarioId={setActiveScenarioId}
               settings={appState.settings}
+              streak={appState.streak}
+              learnedWords={appState.learnedWords}
+              customDecks={appState.customDecks}
               apiConnected={apiConnected}
               speakSpanish={speakSpanish}
               recordPractice={recordPractice}
