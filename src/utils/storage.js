@@ -122,9 +122,14 @@ export function loadSavedCharacterChats() {
   }
 }
 
+export const DEFAULT_FAVOURITES = ["es_barista", "fr_barista", "it_barista"];
+
 export function loadSavedFavourites() {
   try {
     const saved = localStorage.getItem(FAV_STORAGE_KEY);
+    if (saved === null) {
+      return DEFAULT_FAVOURITES;
+    }
     const parsed = saved ? JSON.parse(saved) : [];
     return Array.isArray(parsed) ? parsed : [];
   } catch {

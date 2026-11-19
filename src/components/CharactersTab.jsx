@@ -45,7 +45,7 @@ export default function CharactersTab({
   onUpdateCharacterChat,
   onToggleFavourite,
 }) {
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedCategory, setSelectedCategory] = useState("favourites");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCharacterId, setActiveCharacterId] = useState(null);
   const [revealedIds, setRevealedIds] = useState({});
@@ -1014,7 +1014,7 @@ Respond ONLY with raw JSON matching this structure (no markdown):
               }}
               className="mt-2"
             >
-              Clear filters
+              {selectedCategory === "favourites" ? "Explore all characters" : "Clear filters"}
             </Button>
           </Card>
         ) : (

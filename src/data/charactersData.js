@@ -1,6 +1,6 @@
 export const CHARACTER_CATEGORIES = [
-  { id: "all", label: "All", icon: "✨" },
   { id: "favourites", label: "⭐ Favourites", short: "Favourites" },
+  { id: "all", label: "All", icon: "✨" },
   { id: "everyday", label: "☕ Everyday Life", short: "Everyday" },
   { id: "relationships", label: "❤️ Relationships", short: "Social" },
   { id: "sports", label: "⚽ Sports & Entertainment", short: "Entertainment" },
