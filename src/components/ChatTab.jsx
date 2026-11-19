@@ -389,7 +389,7 @@ Respond ONLY with raw JSON (no markdown):
       <div className="mb-4 space-y-2.5">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <Avatar name={tutorName} size="md" />
+            <Avatar name={tutorName} role="tutor" size="md" />
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <h2 className="text-headline font-semibold text-primary truncate leading-tight">

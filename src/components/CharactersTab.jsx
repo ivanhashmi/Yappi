@@ -448,7 +448,7 @@ Respond ONLY with raw JSON matching this structure (no markdown):
             </button>
 
             <div className="flex items-center gap-2.5 min-w-0">
-              <Avatar name={activeCharacter.name} size="sm" />
+              <Avatar character={activeCharacter} size="sm" />
               <div className="min-w-0">
                 <h2 className="text-headline font-semibold text-primary truncate leading-tight">
                   {activeCharacter.name}
@@ -490,7 +490,7 @@ Respond ONLY with raw JSON matching this structure (no markdown):
 
         {/* Character Bio Card */}
         <Card className="mb-4 p-4 flex items-start gap-3 bg-subtle/50">
-          <Avatar name={activeCharacter.name} size="md" />
+          <Avatar character={activeCharacter} size="md" />
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2">
               <span className="text-caption font-semibold text-primary">
@@ -617,7 +617,7 @@ Respond ONLY with raw JSON matching this structure (no markdown):
           {/* Typing Indicator */}
           {isLoading && (
             <div className="flex items-center gap-2 animate-fade-in py-1">
-              <Avatar name={activeCharacter.name} size="sm" />
+              <Avatar character={activeCharacter} size="sm" />
               <div className="px-4 py-2.5 rounded-2xl bg-surface border border-hairline flex items-center gap-1.5 shadow-xs">
                 <span className="w-1.5 h-1.5 rounded-full bg-muted animate-pulse" />
                 <span className="w-1.5 h-1.5 rounded-full bg-muted animate-pulse [animation-delay:150ms]" />
@@ -839,7 +839,7 @@ Respond ONLY with raw JSON matching this structure (no markdown):
               >
                 <div>
                   <div className="flex items-start justify-between mb-3.5">
-                    <Avatar name={char.name} size="md" />
+                    <Avatar character={char} size="md" />
                     <div className="flex items-center gap-1">
                       <FavouriteButton
                         active={isFavourite(char.id)}
@@ -928,7 +928,7 @@ Respond ONLY with raw JSON matching this structure (no markdown):
                 className="p-4 flex items-center justify-between gap-4"
               >
                 <div className="flex items-center gap-3.5 flex-1 min-w-0">
-                  <Avatar name={char.name} size="md" />
+                  <Avatar character={char} size="md" />
 
                   <div className="min-w-0 text-left flex-1">
                     <div className="flex items-center gap-2">
