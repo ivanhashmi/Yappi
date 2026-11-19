@@ -21,8 +21,28 @@ export default function AuthBottomSheet({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+
+  const handleGoogleSignIn = async () => {
+    if (!supabase || loading || googleLoading) return;
+    setGoogleLoading(true);
+    setError("");
+    setNotice("");
+    try {
+      const { error: googleErr } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin,
+        },
+      });
+      if (googleErr) throw googleErr;
+    } catch (err) {
+      setError(err.message || "Failed to initiate Google sign-in. Please try again.");
+      setGoogleLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -86,13 +106,14 @@ export default function AuthBottomSheet({
         {/* User Summary Header */}
         <div className="flex items-center gap-3.5">
           <Avatar
-            name={user?.email || "Guest User"}
+            name={user?.name || user?.email || "Guest User"}
+            avatar={user?.avatar}
             icon={user ? null : <Icon name="user" className="w-5 h-5" />}
             size="lg"
           />
           <div className="min-w-0">
             <h3 className="text-headline font-semibold text-primary truncate">
-              {user ? user.email.split("@")[0] : "Guest Learner"}
+              {user ? (user.name || user.email.split("@")[0]) : "Guest Learner"}
             </h3>
             <p className="text-caption text-muted truncate">
               {user ? user.email : "Local practice mode"}
@@ -198,6 +219,30 @@ export default function AuthBottomSheet({
                 {notice}
               </div>
             )}
+
+            {/* Google OAuth Button */}
+            <button
+              type="button"
+              disabled={loading || googleLoading}
+              onClick={handleGoogleSignIn}
+              className="press-scale w-full min-h-[44px] px-4 py-2.5 rounded-2xl border border-hairline bg-surface hover:bg-subtle text-primary font-medium text-caption flex items-center justify-center gap-3 transition-colors shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {googleLoading ? (
+                <div className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Icon name="google" className="w-4 h-4 shrink-0" />
+              )}
+              <span>{googleLoading ? "Connecting to Google…" : "Continue with Google"}</span>
+            </button>
+
+            {/* Subtle Divider */}
+            <div className="flex items-center gap-3 my-1">
+              <div className="flex-1 h-px bg-hairline" />
+              <span className="text-[11px] font-medium text-muted uppercase tracking-wider">
+                or with email
+              </span>
+              <div className="flex-1 h-px bg-hairline" />
+            </div>
 
             <form onSubmit={handleSubmit} className="space-y-3">
               <Input

@@ -107,11 +107,32 @@ export default function App() {
 
     const refreshUserFromClaims = async () => {
       try {
-        const { data } = await supabase.auth.getClaims();
-        if (!active) return;
-        const claims = data?.claims;
+        let user = null;
+        const { data: claimsData } = await supabase.auth.getClaims().catch(() => ({ data: null }));
+        const claims = claimsData?.claims;
         if (claims?.sub) {
-          setAuthUser({ id: claims.sub, email: claims.email || "" });
+          user = {
+            id: claims.sub,
+            email: claims.email || claims.user_metadata?.email || "",
+            name: claims.user_metadata?.full_name || claims.user_metadata?.name || "",
+            avatar: claims.user_metadata?.avatar_url || claims.user_metadata?.picture || null,
+          };
+        } else {
+          const { data: userData } = await supabase.auth.getUser().catch(() => ({ data: null }));
+          if (userData?.user) {
+            const u = userData.user;
+            user = {
+              id: u.id,
+              email: u.email || u.user_metadata?.email || "",
+              name: u.user_metadata?.full_name || u.user_metadata?.name || "",
+              avatar: u.user_metadata?.avatar_url || u.user_metadata?.picture || null,
+            };
+          }
+        }
+
+        if (!active) return;
+        if (user) {
+          setAuthUser(user);
         } else {
           setAuthUser(null);
           syncedUserRef.current = null;

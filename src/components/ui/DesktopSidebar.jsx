@@ -127,13 +127,14 @@ export default function DesktopSidebar({
         >
           <div className="flex items-center gap-2.5 min-w-0">
             <Avatar
-              name={authUser?.email || "Guest"}
+              name={authUser?.name || authUser?.email || "Guest"}
+              avatar={authUser?.avatar}
               icon={authUser ? null : <Icon name="user" className="w-4 h-4" />}
               size="sm"
             />
             <div className="min-w-0">
               <p className="text-caption font-semibold text-primary truncate leading-tight">
-                {authUser ? authUser.email.split("@")[0] : "Guest Learner"}
+                {authUser ? (authUser.name || authUser.email.split("@")[0]) : "Guest Learner"}
               </p>
               <p className="text-overline text-muted truncate">
                 {authUser ? (syncStatus === "syncing" ? "Syncing…" : "Cloud Synced") : "Local mode"}
