@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#181820"/>
+      <stop offset="100%" stop-color="#0A0A0E"/>
+    </linearGradient>
+    <linearGradient id="bubbleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
+    </linearGradient>
+    <linearGradient id="dotGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#60A5FA"/>
+      <stop offset="100%" stop-color="#3B82F6"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+
+  <!-- Dark Apple-style rounded squircle -->
+  <rect width="512" height="512" rx="116" fill="url(#bgGrad)"/>
+  <rect width="504" height="504" x="4" y="4" rx="112" fill="none" stroke="#FFFFFF" stroke-opacity="0.08" stroke-width="4"/>
+
+  <!-- Conversational Speech Bubble -->
+  <path d="M 124 160 C 124 116 156 86 208 86 L 312 86 C 364 86 396 116 396 160 L 396 270 C 396 314 364 344 312 344 L 230 344 L 160 398 C 148 406 132 398 132 384 L 132 344 C 124 340 124 326 124 310 Z" fill="url(#bubbleGrad)" filter="url(#shadow)"/>
+
+  <!-- Bold Modern 'Y' -->
+  <path d="M 204 168 L 260 248 L 260 304" fill="none" stroke="#FFFFFF" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 316 168 L 260 248" fill="none" stroke="#FFFFFF" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Yappi Active Practice Accent Dot -->
+  <circle cx="360" cy="132" r="22" fill="url(#dotGrad)" stroke="#0A0A0E" stroke-width="6"/>
+</svg>
