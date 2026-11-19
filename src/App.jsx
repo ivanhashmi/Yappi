@@ -44,7 +44,11 @@ export default function App() {
   const [characterChats, setCharacterChats] = useState(loadSavedCharacterChats);
   const [favouriteKeys, setFavouriteKeys] = useState(loadSavedFavourites);
   const [activeTab, setActiveTab] = useState("chat");
+  const [activeCharacterId, setActiveCharacterId] = useState(null);
   const [activeScenarioId, setActiveScenarioId] = useState("free");
+
+  // True when user is inside an individual character conversation
+  const isTextingCharacter = activeTab === "characters" && Boolean(activeCharacterId);
   const [showSettings, setShowSettings] = useState(false);
   const [showLearnedModal, setShowLearnedModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -515,7 +519,10 @@ export default function App() {
       <DesktopSidebar
         tabs={navTabs}
         activeTab={activeTab}
-        onSelectTab={setActiveTab}
+        onSelectTab={(tabId) => {
+          setActiveCharacterId(null);
+          setActiveTab(tabId);
+        }}
         currentLanguage={currentLang}
         currentLangConfig={currentLangConfig}
         onOpenLanguageSelector={() => setShowSettings(true)}
@@ -531,77 +538,79 @@ export default function App() {
       {/* Main Content Area: centered column with desktop sidebar margin */}
       <div className="flex-1 lg:pl-64 flex flex-col items-center w-full min-h-screen">
         <div className="w-full max-w-2xl lg:max-w-4xl min-h-screen flex flex-col relative">
-          {/* Mobile Top Navigation Bar (Hidden on desktop because sidebar owns header & switcher) */}
-          <header className="sticky top-0 z-30 glass-header px-4 sm:px-6 py-3 lg:hidden">
-            <div className="flex items-center justify-between gap-3">
-              {/* Minimal Brand Wordmark */}
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="text-title font-semibold tracking-tight text-primary">
-                  Yappi
-                </span>
-                <span className="w-1.5 h-1.5 rounded-full bg-accent" aria-hidden="true" />
-              </div>
-
-              <div className="flex items-center gap-2 shrink-0">
-                {/* Course Switcher Pill */}
-                <button
-                  type="button"
-                  onClick={() => setShowSettings(true)}
-                  className="press-scale inline-flex items-center gap-2 min-h-[44px] px-3.5 py-1.5 rounded-full bg-surface text-primary border border-hairline hover:border-accent/40 shadow-xs cursor-pointer select-none transition-colors"
-                  title="Switch Language & Course Settings"
-                  aria-label={`Current language: ${currentLangConfig.name}. Tap to change language.`}
-                >
-                  <span className="text-body leading-none">{currentLangConfig.flag}</span>
-                  <span className="text-caption font-semibold">
-                    {currentLangConfig.name}
+          {/* Mobile Top Navigation Bar (Hidden on desktop, and hidden on mobile when texting someone like iPhone Messages) */}
+          {!isTextingCharacter && (
+            <header className="sticky top-0 z-30 glass-header px-4 sm:px-6 py-3 lg:hidden">
+              <div className="flex items-center justify-between gap-3">
+                {/* Minimal Brand Wordmark */}
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-title font-semibold tracking-tight text-primary">
+                    Yappi
                   </span>
-                  <Icon name="chevron-down" className="w-3.5 h-3.5 text-muted" />
-                </button>
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent" aria-hidden="true" />
+                </div>
 
-                {/* Stop audio button if speaking */}
-                {isSpeaking && (
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={stopSpeaking}
-                    ariaLabel="Stop audio playback"
+                <div className="flex items-center gap-2 shrink-0">
+                  {/* Course Switcher Pill */}
+                  <button
+                    type="button"
+                    onClick={() => setShowSettings(true)}
+                    className="press-scale inline-flex items-center gap-2 min-h-[44px] px-3.5 py-1.5 rounded-full bg-surface text-primary border border-hairline hover:border-accent/40 shadow-xs cursor-pointer select-none transition-colors"
+                    title="Switch Language & Course Settings"
+                    aria-label={`Current language: ${currentLangConfig.name}. Tap to change language.`}
                   >
-                    Stop
-                  </Button>
-                )}
+                    <span className="text-body leading-none">{currentLangConfig.flag}</span>
+                    <span className="text-caption font-semibold">
+                      {currentLangConfig.name}
+                    </span>
+                    <Icon name="chevron-down" className="w-3.5 h-3.5 text-muted" />
+                  </button>
 
-                {/* Profile & Settings button */}
-                <button
-                  type="button"
-                  onClick={() => setShowAuthModal(true)}
-                  aria-label={authUser ? `Profile: ${authUser.email}` : "Profile & Settings"}
-                  className="press-scale relative w-11 h-11 min-h-[44px] min-w-[44px] rounded-full bg-surface border border-hairline flex items-center justify-center text-primary hover:bg-subtle transition-colors cursor-pointer select-none"
-                  title={authUser ? `Profile · ${authUser.email}` : "Profile & Settings"}
-                >
-                  {profileInitial ? (
-                    <span className="text-caption font-bold text-primary">{profileInitial}</span>
-                  ) : (
-                    <Icon name="user" className="w-4 h-4 text-muted" />
+                  {/* Stop audio button if speaking */}
+                  {isSpeaking && (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={stopSpeaking}
+                      ariaLabel="Stop audio playback"
+                    >
+                      Stop
+                    </Button>
                   )}
-                  {authUser ? (
-                    <span
-                      className={`w-2 h-2 rounded-full absolute top-1.5 right-1.5 ${
-                        syncStatus === "syncing"
-                          ? "bg-status-warning animate-pulse"
-                          : syncStatus === "error"
-                          ? "bg-status-error"
-                          : "bg-status-success"
-                      }`}
-                    />
-                  ) : (
-                    !apiConnected && (
-                      <span className="w-2 h-2 rounded-full bg-status-warning absolute top-1.5 right-1.5" />
-                    )
-                  )}
-                </button>
+
+                  {/* Profile & Settings button */}
+                  <button
+                    type="button"
+                    onClick={() => setShowAuthModal(true)}
+                    aria-label={authUser ? `Profile: ${authUser.email}` : "Profile & Settings"}
+                    className="press-scale relative w-11 h-11 min-h-[44px] min-w-[44px] rounded-full bg-surface border border-hairline flex items-center justify-center text-primary hover:bg-subtle transition-colors cursor-pointer select-none"
+                    title={authUser ? `Profile · ${authUser.email}` : "Profile & Settings"}
+                  >
+                    {profileInitial ? (
+                      <span className="text-caption font-bold text-primary">{profileInitial}</span>
+                    ) : (
+                      <Icon name="user" className="w-4 h-4 text-muted" />
+                    )}
+                    {authUser ? (
+                      <span
+                        className={`w-2 h-2 rounded-full absolute top-1.5 right-1.5 ${
+                          syncStatus === "syncing"
+                            ? "bg-status-warning animate-pulse"
+                            : syncStatus === "error"
+                            ? "bg-status-error"
+                            : "bg-status-success"
+                        }`}
+                      />
+                    ) : (
+                      !apiConnected && (
+                        <span className="w-2 h-2 rounded-full bg-status-warning absolute top-1.5 right-1.5" />
+                      )
+                    )}
+                  </button>
+                </div>
               </div>
-            </div>
-          </header>
+            </header>
+          )}
 
           {/* Desktop Floating Audio Stop Pill if Speaking */}
           {isSpeaking && (
@@ -618,7 +627,13 @@ export default function App() {
           )}
 
           {/* Main Viewport Content */}
-          <main className="flex-1 px-4 sm:px-6 py-4 pb-24 lg:pb-8 flex flex-col w-full">
+          <main
+            className={`flex-1 px-4 sm:px-6 flex flex-col w-full ${
+              isTextingCharacter
+                ? "py-0 pb-safe-bottom"
+                : "py-4 pb-24 lg:pb-8"
+            }`}
+          >
           {activeTab === "chat" && (
             <ChatTab
               language={currentLang}
@@ -654,6 +669,8 @@ export default function App() {
               onOpenSettings={() => setShowSettings(true)}
               characterChats={characterChats}
               favouriteKeys={favouriteKeys}
+              activeCharacterId={activeCharacterId}
+              onActiveCharacterChange={setActiveCharacterId}
               onUpdateCharacterChat={handleUpdateCharacterChat}
               onToggleFavourite={handleToggleFavourite}
             />
@@ -710,12 +727,17 @@ export default function App() {
           )}
         </main>
 
-        {/* Apple-Style Minimal Fixed Bottom Tab Bar */}
-        <TabBar
-          tabs={navTabs}
-          activeTab={activeTab}
-          onSelectTab={setActiveTab}
-        />
+        {/* Apple-Style Minimal Fixed Bottom Tab Bar (Hidden when texting someone like iPhone Messages) */}
+        {!isTextingCharacter && (
+          <TabBar
+            tabs={navTabs}
+            activeTab={activeTab}
+            onSelectTab={(tabId) => {
+              setActiveCharacterId(null);
+              setActiveTab(tabId);
+            }}
+          />
+        )}
 
         {/* Settings Bottom Sheet Modal */}
         {showSettings && (

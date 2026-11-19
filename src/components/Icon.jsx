@@ -134,6 +134,7 @@ export default function Icon({ name, className = "w-5 h-5", filled = false, stro
         </svg>
       );
     case "arrowRight":
+    case "chevronRight":
       return (
         <svg {...props}>
           <path d="m9 18 6-6-6-6" />

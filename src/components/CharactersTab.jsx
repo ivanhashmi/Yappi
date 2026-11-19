@@ -42,12 +42,26 @@ export default function CharactersTab({
   onOpenSettings,
   characterChats: characterChatsProp,
   favouriteKeys: favouriteKeysProp,
+  activeCharacterId: activeCharacterIdProp,
+  onActiveCharacterChange,
   onUpdateCharacterChat,
   onToggleFavourite,
 }) {
   const [selectedCategory, setSelectedCategory] = useState("favourites");
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeCharacterId, setActiveCharacterId] = useState(null);
+  const [localActiveCharacterId, setLocalActiveCharacterId] = useState(null);
+  const activeCharacterId = activeCharacterIdProp !== undefined ? activeCharacterIdProp : localActiveCharacterId;
+
+  const setActiveCharacterId = useCallback(
+    (id) => {
+      if (onActiveCharacterChange) {
+        onActiveCharacterChange(id);
+      } else {
+        setLocalActiveCharacterId(id);
+      }
+    },
+    [onActiveCharacterChange]
+  );
   const [revealedIds, setRevealedIds] = useState({});
   const [localCharacterChats, setLocalCharacterChats] = useState(loadSavedCharacterChats);
   const [localFavouriteKeys, setLocalFavouriteKeys] = useState(loadSavedFavourites);
@@ -501,36 +515,43 @@ Respond ONLY with raw JSON matching this structure (no markdown):
   if (activeCharacter) {
     return (
       <div className="flex-1 flex flex-col h-full animate-fade-in">
-        {/* Sticky Chat Header */}
-        <div className="glass sticky top-0 z-20 -mx-4 -mt-4 px-4 py-3 flex items-center justify-between border-b border-hairline mb-3">
-          <div className="flex items-center gap-3 min-w-0">
+        {/* Sticky Chat Header - iPhone Messages Style */}
+        <div className="glass-header sticky top-0 z-30 -mx-4 sm:-mx-6 px-3 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between border-b border-hairline mb-3">
+          {/* Left: iOS Back Button with Accent Chevron */}
+          <div className="flex items-center min-w-[70px] shrink-0">
             <button
               type="button"
               onClick={() => {
                 stopVoiceInput();
                 setActiveCharacterId(null);
               }}
-              className="press-scale min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center text-muted hover:text-primary hover:bg-subtle cursor-pointer transition-colors"
-              aria-label="Back to Characters"
+              className="press-scale -ml-1 min-h-[44px] px-2 rounded-full inline-flex items-center gap-1 text-accent font-semibold text-caption cursor-pointer hover:opacity-80 transition-opacity select-none"
+              aria-label="Back to Personas"
               title="Back"
             >
-              <Icon name="arrowLeft" className="w-5 h-5" />
+              <Icon name="arrowLeft" className="w-5 h-5 stroke-[2.5]" />
+              <span className="text-body font-medium hidden xs:inline">Back</span>
             </button>
-
-            <div className="flex items-center gap-2.5 min-w-0">
-              <Avatar character={activeCharacter} size="sm" />
-              <div className="min-w-0">
-                <h2 className="text-headline font-semibold text-primary truncate leading-tight">
-                  {activeCharacter.name}
-                </h2>
-                <p className="text-overline text-muted truncate">
-                  {activeCharacter.title}
-                </p>
-              </div>
-            </div>
           </div>
 
-          <div className="flex items-center gap-1 shrink-0">
+          {/* Center: iPhone Contact Avatar & Name */}
+          <div className="flex flex-col items-center justify-center text-center min-w-0 flex-1 px-1 cursor-default select-none">
+            <div className="relative mb-0.5">
+              <Avatar character={activeCharacter} size="sm" />
+              <span className="w-2 h-2 rounded-full bg-status-success ring-2 ring-surface absolute -bottom-0.5 -right-0.5" />
+            </div>
+            <div className="flex items-center gap-1 max-w-full">
+              <h2 className="text-caption font-semibold text-primary truncate leading-tight">
+                {activeCharacter.name}
+              </h2>
+            </div>
+            <p className="text-[11px] text-muted truncate max-w-full leading-none">
+              {activeCharacter.handle || activeCharacter.title}
+            </p>
+          </div>
+
+          {/* Right: Actions */}
+          <div className="flex items-center justify-end gap-0.5 sm:gap-1 min-w-[70px] shrink-0">
             <FavouriteButton
               active={isFavourite(activeCharacter.id)}
               onClick={() => toggleFavourite(activeCharacter.id)}
@@ -540,7 +561,7 @@ Respond ONLY with raw JSON matching this structure (no markdown):
               onClick={() =>
                 speakSpanish(activeCharacter.greeting, { voiceOverride: activeCharacter.voice })
               }
-              className="press-scale min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center text-muted hover:text-accent hover:bg-subtle cursor-pointer transition-colors"
+              className="press-scale w-9 h-9 min-w-[36px] min-h-[36px] rounded-full flex items-center justify-center text-muted hover:text-accent hover:bg-subtle cursor-pointer transition-colors"
               aria-label="Listen to character voice"
               title="Listen"
             >
@@ -549,7 +570,7 @@ Respond ONLY with raw JSON matching this structure (no markdown):
             <button
               type="button"
               onClick={handleResetChat}
-              className="press-scale min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center text-muted hover:text-status-error hover:bg-subtle cursor-pointer transition-colors"
+              className="press-scale w-9 h-9 min-w-[36px] min-h-[36px] rounded-full flex items-center justify-center text-muted hover:text-status-error hover:bg-subtle cursor-pointer transition-colors"
               aria-label="Reset conversation"
               title="Reset"
             >
@@ -734,8 +755,8 @@ Respond ONLY with raw JSON matching this structure (no markdown):
           </div>
         )}
 
-        {/* Floating Input Dock Area (Sticky Bottom - stays above mobile TabBar) */}
-        <div className="space-y-2 sticky bottom-[calc(4.25rem+env(safe-area-inset-bottom,0.5rem))] lg:bottom-0 bg-canvas/90 backdrop-blur-md pt-2 pb-1 z-30">
+        {/* Floating Input Dock Area (Sticky Bottom - iPhone Messages Style) */}
+        <div className="space-y-2 sticky bottom-0 bg-canvas/90 backdrop-blur-md pt-2 pb-safe-bottom z-30">
           {speechError && (
             <div className="text-caption text-status-error bg-status-error/10 px-3.5 py-1.5 rounded-xl border border-status-error/20 flex items-center justify-between">
               <span>{speechError}</span>
