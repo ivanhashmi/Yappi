@@ -647,6 +647,7 @@ export default function App() {
             <CharactersTab
               language={currentLang}
               settings={appState.settings}
+              learnedWords={appState.learnedWords}
               apiConnected={apiConnected}
               speakSpanish={speakSpanish}
               recordPractice={recordPractice}

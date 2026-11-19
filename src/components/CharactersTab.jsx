@@ -35,6 +35,7 @@ function FavouriteButton({ active, onClick, ariaLabel = "Favourite" }) {
 export default function CharactersTab({
   language = "es",
   settings,
+  learnedWords = {},
   apiConnected,
   speakSpanish,
   recordPractice,
@@ -129,6 +130,75 @@ export default function CharactersTab({
   const favouriteCount = useMemo(
     () => allCharacters.filter((c) => favouriteKeys.includes(`${langKey}_${c.id}`)).length,
     [allCharacters, favouriteKeys, langKey]
+  );
+
+  // Derive human-friendly local progress per character (Not started, 2 chats, 12 words saved)
+  const getCharacterProgress = useCallback(
+    (char) => {
+      if (!char) return { label: "Not started", hasStarted: false, count: 0, savedCount: 0 };
+      const key = `${langKey}_${char.id}`;
+      const thread = characterChats[key] || [];
+      const userMessageCount = thread.filter((m) => m.sender === "user").length;
+
+      // Count words saved in relevant categories if any
+      const savedList = Object.values(learnedWords || {});
+      const charCategory = (char.category || "").toLowerCase();
+      const savedInCategory = savedList.filter((w) => {
+        const cat = (w.category || "").toLowerCase();
+        if (!cat) return false;
+        if (cat.includes(charCategory)) return true;
+        if (
+          charCategory === "everyday" &&
+          (cat.includes("food") || cat.includes("greeting") || cat.includes("salud") || cat.includes("comida"))
+        )
+          return true;
+        if (charCategory === "travel" && (cat.includes("travel") || cat.includes("viaje") || cat.includes("direction")))
+          return true;
+        if (charCategory === "sports" && (cat.includes("sport") || cat.includes("deporte") || cat.includes("hobbi")))
+          return true;
+        if (charCategory === "relationships" && (cat.includes("relat") || cat.includes("social") || cat.includes("famili")))
+          return true;
+        if (charCategory === "career" && (cat.includes("work") || cat.includes("career") || cat.includes("trabaj")))
+          return true;
+        return false;
+      }).length;
+
+      // Formulate human-friendly local progress label
+      if (userMessageCount > 0 && savedInCategory > 0) {
+        return {
+          label: `${userMessageCount} ${userMessageCount === 1 ? "chat" : "chats"} · ${savedInCategory} saved`,
+          hasStarted: true,
+          count: userMessageCount,
+          savedCount: savedInCategory,
+        };
+      }
+
+      if (userMessageCount > 0) {
+        return {
+          label: userMessageCount === 1 ? "1 chat" : `${userMessageCount} chats`,
+          hasStarted: true,
+          count: userMessageCount,
+          savedCount: 0,
+        };
+      }
+
+      if (savedInCategory > 0) {
+        return {
+          label: `${savedInCategory} ${savedInCategory === 1 ? "word" : "words"} saved`,
+          hasStarted: true,
+          count: 0,
+          savedCount: savedInCategory,
+        };
+      }
+
+      return {
+        label: "Not started",
+        hasStarted: false,
+        count: 0,
+        savedCount: 0,
+      };
+    },
+    [langKey, characterChats, learnedWords]
   );
 
   // Active character
@@ -496,9 +566,25 @@ Respond ONLY with raw JSON matching this structure (no markdown):
               <span className="text-caption font-semibold text-primary">
                 {activeCharacter.handle}
               </span>
-              <span className="text-overline text-muted">
-                {activeCharacter.chatsCount} practices
-              </span>
+              {(() => {
+                const activeProg = getCharacterProgress(activeCharacter);
+                return (
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        activeProg.hasStarted ? "bg-status-success" : "bg-muted/40"
+                      }`}
+                    />
+                    <span
+                      className={`text-overline ${
+                        activeProg.hasStarted ? "text-primary font-semibold" : "text-muted"
+                      }`}
+                    >
+                      {activeProg.label}
+                    </span>
+                  </div>
+                );
+              })()}
             </div>
             <p className="text-caption text-muted mt-1 leading-relaxed">
               {activeCharacter.bio}
@@ -860,9 +946,25 @@ Respond ONLY with raw JSON matching this structure (no markdown):
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-hairline flex items-center justify-between">
-                  <span className="text-overline font-medium text-muted">
-                    {char.chatsCount} practices
-                  </span>
+                  {(() => {
+                    const prog = getCharacterProgress(char);
+                    return (
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            prog.hasStarted ? "bg-status-success" : "bg-muted/40"
+                          }`}
+                        />
+                        <span
+                          className={`text-overline ${
+                            prog.hasStarted ? "text-primary font-semibold" : "text-muted"
+                          }`}
+                        >
+                          {prog.label}
+                        </span>
+                      </div>
+                    );
+                  })()}
                   <span className="text-caption font-semibold text-accent">
                     Chat →
                   </span>
@@ -931,13 +1033,27 @@ Respond ONLY with raw JSON matching this structure (no markdown):
                   <Avatar character={char} size="md" />
 
                   <div className="min-w-0 text-left flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="text-headline font-semibold text-primary leading-tight truncate">
                         {char.name}
                       </h3>
                       <span className="text-overline text-muted">
                         {char.handle}
                       </span>
+                      {(() => {
+                        const prog = getCharacterProgress(char);
+                        return (
+                          <span
+                            className={`text-overline px-2 py-0.5 rounded-full font-medium ${
+                              prog.hasStarted
+                                ? "bg-accent/10 text-accent font-semibold"
+                                : "bg-subtle text-muted"
+                            }`}
+                          >
+                            {prog.label}
+                          </span>
+                        );
+                      })()}
                     </div>
                     <p className="text-caption text-muted leading-tight truncate mt-0.5">
                       {char.title}
