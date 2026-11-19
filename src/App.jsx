@@ -630,7 +630,7 @@ export default function App() {
           <main
             className={`flex-1 px-4 sm:px-6 flex flex-col w-full ${
               isTextingCharacter
-                ? "py-0 pb-safe-bottom"
+                ? "py-0 pb-0"
                 : "py-4 pb-24 lg:pb-8"
             }`}
           >

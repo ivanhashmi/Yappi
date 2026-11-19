@@ -518,7 +518,7 @@ Respond ONLY with raw JSON matching this structure (no markdown):
         {/* Sticky Chat Header - iPhone Messages Style */}
         <div className="glass-header sticky top-0 z-30 -mx-4 sm:-mx-6 px-3 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between border-b border-hairline mb-3">
           {/* Left: iOS Back Button with Accent Chevron */}
-          <div className="flex items-center min-w-[70px] shrink-0">
+          <div className="flex items-center w-[70px] shrink-0">
             <button
               type="button"
               onClick={() => {
@@ -550,32 +550,12 @@ Respond ONLY with raw JSON matching this structure (no markdown):
             </p>
           </div>
 
-          {/* Right: Actions */}
-          <div className="flex items-center justify-end gap-0.5 sm:gap-1 min-w-[70px] shrink-0">
+          {/* Right: Single Action (matches left width for centering) */}
+          <div className="flex items-center justify-end w-[70px] shrink-0">
             <FavouriteButton
               active={isFavourite(activeCharacter.id)}
               onClick={() => toggleFavourite(activeCharacter.id)}
             />
-            <button
-              type="button"
-              onClick={() =>
-                speakSpanish(activeCharacter.greeting, { voiceOverride: activeCharacter.voice })
-              }
-              className="press-scale w-9 h-9 min-w-[36px] min-h-[36px] rounded-full flex items-center justify-center text-muted hover:text-accent hover:bg-subtle cursor-pointer transition-colors"
-              aria-label="Listen to character voice"
-              title="Listen"
-            >
-              <Icon name="volume" className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={handleResetChat}
-              className="press-scale w-9 h-9 min-w-[36px] min-h-[36px] rounded-full flex items-center justify-center text-muted hover:text-status-error hover:bg-subtle cursor-pointer transition-colors"
-              aria-label="Reset conversation"
-              title="Reset"
-            >
-              <Icon name="refresh" className="w-4 h-4" />
-            </button>
           </div>
         </div>
 
@@ -610,6 +590,31 @@ Respond ONLY with raw JSON matching this structure (no markdown):
             <p className="text-caption text-muted mt-1 leading-relaxed">
               {activeCharacter.bio}
             </p>
+            {/* Quick Actions: Listen & Reset */}
+            <div className="flex items-center gap-2 mt-2">
+              <button
+                type="button"
+                onClick={() =>
+                  speakSpanish(activeCharacter.greeting, { voiceOverride: activeCharacter.voice })
+                }
+                className="press-scale inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-overline font-medium text-muted hover:text-accent hover:bg-subtle border border-hairline cursor-pointer transition-colors"
+                aria-label="Listen to character voice"
+                title="Listen"
+              >
+                <Icon name="volume" className="w-3 h-3" />
+                <span>Listen</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleResetChat}
+                className="press-scale inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-overline font-medium text-muted hover:text-status-error hover:bg-subtle border border-hairline cursor-pointer transition-colors"
+                aria-label="Reset conversation"
+                title="Reset chat"
+              >
+                <Icon name="refresh" className="w-3 h-3" />
+                <span>Reset</span>
+              </button>
+            </div>
           </div>
         </Card>
 
@@ -756,7 +761,7 @@ Respond ONLY with raw JSON matching this structure (no markdown):
         )}
 
         {/* Floating Input Dock Area (Sticky Bottom - iPhone Messages Style) */}
-        <div className="space-y-2 sticky bottom-0 bg-canvas/90 backdrop-blur-md pt-2 pb-safe-bottom z-30">
+        <div className="space-y-2 sticky bottom-0 bg-canvas/90 backdrop-blur-md pt-2 bottom-bar-safe z-30">
           {speechError && (
             <div className="text-caption text-status-error bg-status-error/10 px-3.5 py-1.5 rounded-xl border border-status-error/20 flex items-center justify-between">
               <span>{speechError}</span>

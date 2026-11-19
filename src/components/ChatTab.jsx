@@ -394,10 +394,10 @@ Respond ONLY with raw JSON (no markdown):
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-wrap">
-                <h2 className="text-headline font-semibold text-primary truncate leading-tight">
+                <h2 className="text-headline font-semibold text-primary leading-tight whitespace-nowrap">
                   {tutorName}
                 </h2>
-                <span className="text-[11px] sm:text-overline font-semibold uppercase tracking-wider text-accent bg-accent/10 px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
+                <span className="text-[11px] sm:text-overline font-semibold uppercase tracking-wider text-accent bg-accent/10 px-2 py-0.5 rounded-full whitespace-nowrap shrink-0 hidden sm:inline-block">
                   Personal Tutor
                 </span>
               </div>
