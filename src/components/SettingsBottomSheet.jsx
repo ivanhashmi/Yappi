@@ -83,7 +83,8 @@ export default function SettingsBottomSheet({
           >
             <div className="flex items-center gap-3.5 min-w-0">
               <Avatar
-                name={authUser?.email || "Guest"}
+                name={authUser?.name || authUser?.email || "Guest"}
+                avatar={authUser?.avatar}
                 icon={authUser ? null : <Icon name="user" className="w-5 h-5" />}
                 size="md"
               />

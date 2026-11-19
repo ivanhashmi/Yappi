@@ -645,10 +645,17 @@ export default function App() {
                     type="button"
                     onClick={() => setShowAuthModal(true)}
                     aria-label={authUser ? `Profile: ${authUser.email}` : "Profile & Settings"}
-                    className="press-scale relative w-11 h-11 min-h-[44px] min-w-[44px] rounded-full bg-surface border border-hairline flex items-center justify-center text-primary hover:bg-subtle transition-colors cursor-pointer select-none"
+                    className="press-scale relative w-11 h-11 min-h-[44px] min-w-[44px] rounded-full bg-surface border border-hairline flex items-center justify-center text-primary hover:bg-subtle transition-colors cursor-pointer select-none overflow-hidden"
                     title={authUser ? `Profile · ${authUser.email}` : "Profile & Settings"}
                   >
-                    {profileInitial ? (
+                    {authUser?.avatar ? (
+                      <img
+                        src={authUser.avatar}
+                        alt="Profile"
+                        className="w-full h-full object-cover rounded-full"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : profileInitial ? (
                       <span className="text-caption font-bold text-primary">{profileInitial}</span>
                     ) : (
                       <Icon name="user" className="w-4 h-4 text-muted" />

@@ -517,9 +517,25 @@ export default function Avatar({
 
   const RoleIconComponent = ROLE_ICONS[rawRoleKey];
 
+  const isImageUrl =
+    typeof resolvedAvatar === "string" &&
+    (resolvedAvatar.startsWith("http://") ||
+      resolvedAvatar.startsWith("https://") ||
+      resolvedAvatar.startsWith("data:") ||
+      resolvedAvatar.startsWith("/"));
+
   // Render content based on availability and variant
   let content = null;
-  if (icon) {
+  if (isImageUrl) {
+    content = (
+      <img
+        src={resolvedAvatar}
+        alt={resolvedName || "Avatar"}
+        className="w-full h-full object-cover rounded-full"
+        referrerPolicy="no-referrer"
+      />
+    );
+  } else if (icon) {
     content = <span className="opacity-95">{icon}</span>;
   } else if (variant === "emoji" && resolvedAvatar) {
     content = <span className={`select-none leading-none ${emojiSizes}`}>{resolvedAvatar}</span>;
@@ -534,7 +550,7 @@ export default function Avatar({
   return (
     <div
       aria-label={ariaLabel || resolvedName}
-      className={`rounded-full border flex items-center justify-center shrink-0 select-none transition-colors duration-fast ${theme.bg} ${theme.border} ${theme.text} ${sizeClasses} ${className}`}
+      className={`rounded-full border flex items-center justify-center shrink-0 select-none overflow-hidden transition-colors duration-fast ${theme.bg} ${theme.border} ${theme.text} ${sizeClasses} ${className}`}
     >
       {content}
     </div>
