@@ -734,8 +734,8 @@ Respond ONLY with raw JSON matching this structure (no markdown):
           </div>
         )}
 
-        {/* Floating Input Dock Area (Sticky Bottom) */}
-        <div className="space-y-2 sticky bottom-0 bg-canvas/80 backdrop-blur-md pt-2 pb-1 z-20">
+        {/* Floating Input Dock Area (Sticky Bottom - stays above mobile TabBar) */}
+        <div className="space-y-2 sticky bottom-[calc(4.25rem+env(safe-area-inset-bottom,0.5rem))] lg:bottom-0 bg-canvas/90 backdrop-blur-md pt-2 pb-1 z-30">
           {speechError && (
             <div className="text-caption text-status-error bg-status-error/10 px-3.5 py-1.5 rounded-xl border border-status-error/20 flex items-center justify-between">
               <span>{speechError}</span>
@@ -816,7 +816,7 @@ Respond ONLY with raw JSON matching this structure (no markdown):
               }}
               placeholder={`Reply to ${activeCharacter.name}…`}
               disabled={isLoading}
-              className="flex-1 bg-transparent px-3 py-2 text-body text-primary placeholder:text-muted focus:outline-none"
+              className="flex-1 min-w-0 bg-transparent px-3 py-2 text-body text-primary placeholder:text-muted focus:outline-none"
             />
 
             <button

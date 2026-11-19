@@ -387,15 +387,17 @@ Respond ONLY with raw JSON (no markdown):
     <div className="flex flex-col h-full flex-1 max-w-2xl mx-auto w-full">
       {/* Tutor Identity Header & Controls */}
       <div className="mb-4 space-y-2.5">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <Avatar name={tutorName} role="tutor" size="md" />
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+            <div className="shrink-0">
+              <Avatar name={tutorName} role="tutor" size="md" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-wrap">
                 <h2 className="text-headline font-semibold text-primary truncate leading-tight">
                   {tutorName}
                 </h2>
-                <span className="text-overline font-semibold uppercase tracking-wider text-accent bg-accent/10 px-2 py-0.5 rounded-full">
+                <span className="text-[11px] sm:text-overline font-semibold uppercase tracking-wider text-accent bg-accent/10 px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
                   Personal Tutor
                 </span>
               </div>
@@ -405,42 +407,45 @@ Respond ONLY with raw JSON (no markdown):
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <button
               type="button"
               onClick={onToggleAutoSpeak}
-              className="press-scale min-h-[36px] px-2.5 rounded-xl border border-hairline bg-surface hover:bg-subtle inline-flex items-center gap-1.5 text-caption font-medium text-muted hover:text-primary cursor-pointer transition-colors"
-              title="Toggle automatic speech synthesis"
+              className="press-scale min-h-[36px] min-w-[36px] px-2 sm:px-2.5 rounded-xl border border-hairline bg-surface hover:bg-subtle inline-flex items-center justify-center gap-1.5 text-caption font-medium text-muted hover:text-primary cursor-pointer transition-colors"
+              title={`Toggle auto audio playback (currently ${settings.autoSpeak ? "On" : "Off"})`}
+              aria-label={`Toggle auto audio playback (currently ${settings.autoSpeak ? "On" : "Off"})`}
             >
-              <Icon name="volume" className="w-3.5 h-3.5" />
-              <span>Audio {settings.autoSpeak ? "On" : "Off"}</span>
+              <Icon name="volume" className="w-3.5 h-3.5 shrink-0" />
+              <span className="hidden sm:inline">Audio </span>
+              <span className="text-xs sm:text-caption font-semibold">{settings.autoSpeak ? "On" : "Off"}</span>
             </button>
             <button
               type="button"
               onClick={resetTutorChat}
-              className="press-scale min-h-[36px] px-2.5 rounded-xl border border-hairline bg-surface hover:bg-subtle inline-flex items-center gap-1.5 text-caption font-medium text-muted hover:text-primary cursor-pointer transition-colors"
+              className="press-scale min-h-[36px] min-w-[36px] px-2 sm:px-2.5 rounded-xl border border-hairline bg-surface hover:bg-subtle inline-flex items-center justify-center gap-1.5 text-caption font-medium text-muted hover:text-primary cursor-pointer transition-colors"
               title="Restart conversation"
+              aria-label="Restart conversation"
             >
-              <Icon name="refresh" className="w-3.5 h-3.5" />
-              <span>Restart</span>
+              <Icon name="refresh" className="w-3.5 h-3.5 shrink-0" />
+              <span className="hidden sm:inline">Restart</span>
             </button>
           </div>
         </div>
 
         {/* Quiet Sub-bar: Real-time Stats & AI status */}
-        <div className="flex items-center justify-between text-caption text-muted px-1 pt-1.5 border-t border-hairline">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between text-caption text-muted px-1 pt-1.5 border-t border-hairline gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <span
               className={`w-2 h-2 rounded-full ${
                 apiConnected ? "bg-status-success" : "bg-status-warning"
               }`}
             />
-            <span className="font-medium text-primary">
+            <span className="font-medium text-primary text-xs sm:text-caption">
               {apiConnected ? "Gemini AI" : "Practice Mode"}
             </span>
           </div>
 
-          <div className="flex items-center gap-3 text-caption text-muted font-medium">
+          <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-caption text-muted font-medium shrink-0">
             <span>🔥 {streakCount}d streak</span>
             <span>·</span>
             <span>📚 {learnedCount} saved words</span>
@@ -596,11 +601,11 @@ Respond ONLY with raw JSON (no markdown):
           </div>
         )}
 
-        <div ref={endRef} />
+        <div ref={endRef} className="h-4 shrink-0" />
       </div>
 
-      {/* Floating Bottom Input Bar */}
-      <div className="space-y-2 sticky bottom-0 bg-canvas/80 backdrop-blur-md pt-2 pb-1">
+      {/* Floating Bottom Input Bar (Sticks cleanly above mobile TabBar on small screens) */}
+      <div className="space-y-2 sticky bottom-[calc(4.25rem+env(safe-area-inset-bottom,0.5rem))] lg:bottom-0 bg-canvas/90 backdrop-blur-md pt-2 pb-1 z-30">
         {speechError && (
           <div className="text-caption text-status-error bg-status-error/10 px-3.5 py-1.5 rounded-xl border border-status-error/20 flex items-center justify-between">
             <span>{speechError}</span>
@@ -691,7 +696,7 @@ Respond ONLY with raw JSON (no markdown):
             }}
             placeholder={`Ask a ${langName} doubt in English or ${langName}…`}
             disabled={isLoading}
-            className="flex-1 bg-transparent px-3 py-2 text-body text-primary placeholder:text-muted focus:outline-none"
+            className="flex-1 min-w-0 bg-transparent px-3 py-2 text-body text-primary placeholder:text-muted focus:outline-none"
           />
 
           <button
