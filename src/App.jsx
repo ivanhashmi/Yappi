@@ -58,6 +58,7 @@ export default function App() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [serverApiConfigured, setServerApiConfigured] = useState(true);
   const currentAudioRef = useRef(null);
+  const isSpeakingRef = useRef(false);
 
   const appStateRef = useRef(appState);
   const charChatsRef = useRef(characterChats);
@@ -235,7 +236,11 @@ export default function App() {
 
   const speakWithDevice = useCallback(
     (text, { slow = false } = {}) => {
-      if (typeof window === "undefined" || !("speechSynthesis" in window) || !text) return;
+      if (typeof window === "undefined" || !("speechSynthesis" in window) || !text) {
+        isSpeakingRef.current = false;
+        setIsSpeaking(false);
+        return;
+      }
       try {
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
@@ -246,64 +251,100 @@ export default function App() {
         utterance.lang = voice?.lang || preferred;
         const baseRate = Number(appState.settings.speechRate) || 0.92;
         utterance.rate = slow ? Math.max(0.58, baseRate * 0.72) : baseRate;
-        utterance.onstart = () => setIsSpeaking(true);
-        utterance.onend = () => setIsSpeaking(false);
-        utterance.onerror = () => setIsSpeaking(false);
+        utterance.onstart = () => {
+          isSpeakingRef.current = true;
+          setIsSpeaking(true);
+        };
+        utterance.onend = () => {
+          isSpeakingRef.current = false;
+          setIsSpeaking(false);
+        };
+        utterance.onerror = () => {
+          isSpeakingRef.current = false;
+          setIsSpeaking(false);
+        };
+        isSpeakingRef.current = true;
+        setIsSpeaking(true);
         window.speechSynthesis.speak(utterance);
       } catch {
+        isSpeakingRef.current = false;
         setIsSpeaking(false);
       }
     },
-    [currentLang, appState.settings.accent, appState.settings.speechRate, appState.settings.selectedVoiceURI, pickNativeVoice]
+    [currentLang, currentLangConfig, appState.settings.accent, appState.settings.speechRate, appState.settings.selectedVoiceURI, pickNativeVoice]
   );
 
   const stopSpeaking = useCallback(() => {
     if (currentAudioRef.current) {
-      currentAudioRef.current.pause();
+      try {
+        currentAudioRef.current.pause();
+      } catch {}
       currentAudioRef.current = null;
     }
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
+      try {
+        window.speechSynthesis.cancel();
+      } catch {}
     }
+    isSpeakingRef.current = false;
     setIsSpeaking(false);
   }, []);
 
   const speakSpanish = useCallback(
     async (text, { slow = false, forceDevice = false, voiceOverride } = {}) => {
       if (!text) return;
-      stopSpeaking();
+      // Prevent overlapping audio: ignore repeated taps until the current audio completes
+      if (isSpeakingRef.current) {
+        return;
+      }
+
+      isSpeakingRef.current = true;
+      setIsSpeaking(true);
 
       const useGemini = !forceDevice && appState.settings.voiceEngine !== "device";
 
       if (useGemini && serverApiConfigured) {
-        setIsSpeaking(true);
         try {
           const chosenVoice = voiceOverride || appState.settings.geminiVoice || "Kore";
           const dataUri = await fetchGeminiSpeechAudio(text, chosenVoice);
+
+          // If speech was stopped while waiting for audio fetch, cancel playback
+          if (!isSpeakingRef.current) {
+            return;
+          }
+
           const audio = new Audio(dataUri);
           currentAudioRef.current = audio;
           audio.playbackRate = slow ? 0.8 : 1.0;
-          audio.onplay = () => setIsSpeaking(true);
+          audio.onplay = () => {
+            isSpeakingRef.current = true;
+            setIsSpeaking(true);
+          };
           audio.onended = () => {
+            isSpeakingRef.current = false;
             setIsSpeaking(false);
             currentAudioRef.current = null;
           };
           audio.onerror = () => {
-            setIsSpeaking(false);
             currentAudioRef.current = null;
-            speakWithDevice(text, { slow });
+            if (isSpeakingRef.current) {
+              speakWithDevice(text, { slow });
+            }
           };
           await audio.play();
           return;
         } catch (err) {
           console.warn("Gemini voice audio error, falling back to device speech:", err);
           currentAudioRef.current = null;
+          if (!isSpeakingRef.current) {
+            return;
+          }
         }
       }
 
       speakWithDevice(text, { slow });
     },
-    [appState.settings.voiceEngine, appState.settings.geminiVoice, serverApiConfigured, stopSpeaking, speakWithDevice]
+    [appState.settings.voiceEngine, appState.settings.geminiVoice, serverApiConfigured, speakWithDevice]
   );
 
   const runBgSync = useCallback((fn) => {
@@ -643,6 +684,7 @@ export default function App() {
               learnedWords={appState.learnedWords}
               customDecks={appState.customDecks}
               apiConnected={apiConnected}
+              isSpeaking={isSpeaking}
               speakSpanish={speakSpanish}
               recordPractice={recordPractice}
               onOpenSettings={() => setShowSettings(true)}
@@ -664,6 +706,7 @@ export default function App() {
               settings={appState.settings}
               learnedWords={appState.learnedWords}
               apiConnected={apiConnected}
+              isSpeaking={isSpeaking}
               speakSpanish={speakSpanish}
               recordPractice={recordPractice}
               onOpenSettings={() => setShowSettings(true)}
@@ -682,6 +725,7 @@ export default function App() {
               customDecks={appState.customDecks}
               settings={appState.settings}
               apiConnected={apiConnected}
+              isSpeaking={isSpeaking}
               speakSpanish={speakSpanish}
               recordPractice={recordPractice}
               isWordLearned={isWordLearned}
@@ -709,6 +753,7 @@ export default function App() {
               language={currentLang}
               settings={appState.settings}
               apiConnected={apiConnected}
+              isSpeaking={isSpeaking}
               recentTranslations={appState.recentTranslations}
               speakSpanish={speakSpanish}
               recordPractice={recordPractice}
@@ -799,6 +844,7 @@ export default function App() {
         {showLearnedModal && (
           <LearnedWordsBottomSheet
             learnedWords={appState.learnedWords}
+            isSpeaking={isSpeaking}
             speakSpanish={speakSpanish}
             onRemove={(key) => {
               setAppState((prev) => {

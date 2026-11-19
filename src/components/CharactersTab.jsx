@@ -37,6 +37,7 @@ export default function CharactersTab({
   settings,
   learnedWords = {},
   apiConnected,
+  isSpeaking = false,
   speakSpanish,
   recordPractice,
   onOpenSettings,
@@ -594,15 +595,20 @@ Respond ONLY with raw JSON matching this structure (no markdown):
             <div className="flex items-center gap-2 mt-2">
               <button
                 type="button"
+                disabled={isSpeaking}
                 onClick={() =>
                   speakSpanish(activeCharacter.greeting, { voiceOverride: activeCharacter.voice })
                 }
-                className="press-scale inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-overline font-medium text-muted hover:text-accent hover:bg-subtle border border-hairline cursor-pointer transition-colors"
+                className={`press-scale inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-overline font-medium border border-hairline transition-colors ${
+                  isSpeaking
+                    ? "opacity-50 cursor-not-allowed text-muted"
+                    : "text-muted hover:text-accent hover:bg-subtle cursor-pointer"
+                }`}
                 aria-label="Listen to character voice"
-                title="Listen"
+                title={isSpeaking ? "Audio playing…" : "Listen"}
               >
-                <Icon name="volume" className="w-3 h-3" />
-                <span>Listen</span>
+                <Icon name="volume" className={`w-3 h-3 ${isSpeaking ? "animate-pulse text-accent" : ""}`} />
+                <span>{isSpeaking ? "Playing…" : "Listen"}</span>
               </button>
               <button
                 type="button"
@@ -644,24 +650,36 @@ Respond ONLY with raw JSON matching this structure (no markdown):
                     <div className="flex items-center gap-1">
                       <button
                         type="button"
+                        disabled={isSpeaking}
                         onClick={() =>
                           speakSpanish(msg.text, { voiceOverride: activeCharacter.voice })
                         }
-                        className="press-scale min-w-[36px] min-h-[36px] rounded-full flex items-center justify-center text-muted hover:text-accent hover:bg-subtle cursor-pointer transition-colors"
+                        className={`press-scale min-w-[36px] min-h-[36px] rounded-full flex items-center justify-center transition-colors ${
+                          isSpeaking
+                            ? "opacity-50 cursor-not-allowed text-muted"
+                            : "text-muted hover:text-accent hover:bg-subtle cursor-pointer"
+                        }`}
                         aria-label="Listen"
+                        title={isSpeaking ? "Audio playing…" : "Listen"}
                       >
                         <Icon name="volume" className="w-3.5 h-3.5" />
                       </button>
                       <button
                         type="button"
+                        disabled={isSpeaking}
                         onClick={() =>
                           speakSpanish(msg.text, {
                             slow: true,
                             voiceOverride: activeCharacter.voice,
                           })
                         }
-                        className="press-scale px-2 py-1 rounded-full text-overline font-medium text-muted hover:text-primary hover:bg-subtle cursor-pointer transition-colors"
+                        className={`press-scale px-2 py-1 rounded-full text-overline font-medium transition-colors ${
+                          isSpeaking
+                            ? "opacity-50 cursor-not-allowed text-muted"
+                            : "text-muted hover:text-primary hover:bg-subtle cursor-pointer"
+                        }`}
                         aria-label="Listen at 0.7x speed"
+                        title={isSpeaking ? "Audio playing…" : "Listen at 0.7x speed"}
                       >
                         0.7×
                       </button>

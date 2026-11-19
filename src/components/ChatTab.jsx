@@ -15,6 +15,7 @@ export default function ChatTab({
   learnedWords = {},
   customDecks = [],
   apiConnected,
+  isSpeaking = false,
   speakSpanish,
   recordPractice,
   onOpenSettings,
@@ -491,19 +492,29 @@ Respond ONLY with raw JSON (no markdown):
                   <div className="flex items-center gap-1">
                     <button
                       type="button"
+                      disabled={isSpeaking}
                       onClick={() => speakSpanish(msg.spanish)}
                       aria-label="Listen to message"
-                      className="press-scale p-1.5 rounded-xl text-muted hover:text-primary hover:bg-subtle cursor-pointer transition-colors"
-                      title="Listen"
+                      className={`press-scale p-1.5 rounded-xl transition-colors ${
+                        isSpeaking
+                          ? "opacity-50 cursor-not-allowed text-muted"
+                          : "text-muted hover:text-primary hover:bg-subtle cursor-pointer"
+                      }`}
+                      title={isSpeaking ? "Audio playing…" : "Listen"}
                     >
                       <Icon name="volume" className="w-4 h-4" />
                     </button>
                     <button
                       type="button"
+                      disabled={isSpeaking}
                       onClick={() => speakSpanish(msg.spanish, { slow: true })}
                       aria-label="Listen to message slowly"
-                      className="press-scale px-2 py-1 rounded-xl bg-subtle text-caption font-medium text-muted hover:text-primary cursor-pointer transition-colors"
-                      title="Listen at 0.7x speed"
+                      className={`press-scale px-2 py-1 rounded-xl bg-subtle text-caption font-medium transition-colors ${
+                        isSpeaking
+                          ? "opacity-50 cursor-not-allowed text-muted"
+                          : "text-muted hover:text-primary cursor-pointer"
+                      }`}
+                      title={isSpeaking ? "Audio playing…" : "Listen at 0.7x speed"}
                     >
                       0.7×
                     </button>
@@ -524,9 +535,15 @@ Respond ONLY with raw JSON (no markdown):
                       </span>
                       <button
                         type="button"
+                        disabled={isSpeaking}
                         onClick={() => speakSpanish(msg.correction.corrected_spanish)}
                         aria-label="Listen to correction"
-                        className="press-scale inline-flex items-center gap-1 text-caption text-accent font-medium hover:underline cursor-pointer"
+                        className={`press-scale inline-flex items-center gap-1 text-caption font-medium ${
+                          isSpeaking
+                            ? "opacity-50 cursor-not-allowed text-muted"
+                            : "text-accent hover:underline cursor-pointer"
+                        }`}
+                        title={isSpeaking ? "Audio playing…" : "Hear correction"}
                       >
                         <Icon name="volume" className="w-3 h-3" />
                         <span>Hear</span>

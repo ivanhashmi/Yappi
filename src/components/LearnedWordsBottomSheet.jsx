@@ -7,6 +7,7 @@ import { Sheet, Button, Card } from "./ui";
  * ========================================================================== */
 export default function LearnedWordsBottomSheet({
   learnedWords = {},
+  isSpeaking = false,
   speakSpanish,
   onRemove,
   onClose,
@@ -58,9 +59,15 @@ export default function LearnedWordsBottomSheet({
                 <div className="flex items-center gap-1 shrink-0">
                   <button
                     type="button"
+                    disabled={isSpeaking}
                     onClick={() => speakSpanish(w.spanish)}
-                    className="press-scale min-w-[36px] min-h-[36px] rounded-full flex items-center justify-center text-muted hover:text-accent hover:bg-subtle cursor-pointer transition-colors"
+                    className={`press-scale min-w-[36px] min-h-[36px] rounded-full flex items-center justify-center transition-colors ${
+                      isSpeaking
+                        ? "opacity-50 cursor-not-allowed text-muted"
+                        : "text-muted hover:text-accent hover:bg-subtle cursor-pointer"
+                    }`}
                     aria-label={`Listen to ${w.spanish}`}
+                    title={isSpeaking ? "Audio playing…" : `Listen to ${w.spanish}`}
                   >
                     <Icon name="volume" className="w-4 h-4" />
                   </button>

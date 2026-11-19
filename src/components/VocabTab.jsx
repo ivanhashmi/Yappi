@@ -13,6 +13,7 @@ export default function VocabTab({
   customDecks,
   settings,
   apiConnected,
+  isSpeaking = false,
   speakSpanish,
   recordPractice,
   isWordLearned,
@@ -279,12 +280,18 @@ Respond ONLY with raw JSON:
                   <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                     <button
                       type="button"
+                      disabled={isSpeaking}
                       onClick={() => {
                         recordPractice();
                         speakSpanish(currentCard.spanish);
                       }}
-                      className="press-scale min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center text-muted hover:text-accent hover:bg-subtle cursor-pointer transition-colors"
+                      className={`press-scale min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center transition-colors ${
+                        isSpeaking
+                          ? "opacity-50 cursor-not-allowed text-muted"
+                          : "text-muted hover:text-accent hover:bg-subtle cursor-pointer"
+                      }`}
                       aria-label="Listen to pronunciation"
+                      title={isSpeaking ? "Audio playing…" : "Listen"}
                     >
                       <Icon name="volume" className="w-4 h-4" />
                     </button>
@@ -333,12 +340,18 @@ Respond ONLY with raw JSON:
                   <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                     <button
                       type="button"
+                      disabled={isSpeaking}
                       onClick={() => {
                         recordPractice();
                         speakSpanish(currentCard.example_es);
                       }}
-                      className="press-scale min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center text-muted hover:text-accent hover:bg-subtle cursor-pointer transition-colors"
+                      className={`press-scale min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center transition-colors ${
+                        isSpeaking
+                          ? "opacity-50 cursor-not-allowed text-muted"
+                          : "text-muted hover:text-accent hover:bg-subtle cursor-pointer"
+                      }`}
                       aria-label="Listen to example sentence"
+                      title={isSpeaking ? "Audio playing…" : "Listen"}
                     >
                       <Icon name="volume" className="w-4 h-4" />
                     </button>
@@ -462,12 +475,18 @@ Respond ONLY with raw JSON:
                 <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
                   <button
                     type="button"
+                    disabled={isSpeaking}
                     onClick={() => {
                       recordPractice();
                       speakSpanish(c.spanish);
                     }}
-                    className="press-scale min-w-[36px] min-h-[36px] rounded-full flex items-center justify-center text-muted hover:text-accent hover:bg-subtle cursor-pointer transition-colors"
+                    className={`press-scale min-w-[36px] min-h-[36px] rounded-full flex items-center justify-center transition-colors ${
+                      isSpeaking
+                        ? "opacity-50 cursor-not-allowed text-muted"
+                        : "text-muted hover:text-accent hover:bg-subtle cursor-pointer"
+                    }`}
                     aria-label={`Listen to ${c.spanish}`}
+                    title={isSpeaking ? "Audio playing…" : `Listen to ${c.spanish}`}
                   >
                     <Icon name="volume" className="w-3.5 h-3.5" />
                   </button>

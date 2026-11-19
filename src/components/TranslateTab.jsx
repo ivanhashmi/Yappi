@@ -11,6 +11,7 @@ export default function TranslateTab({
   language = "es",
   settings,
   apiConnected,
+  isSpeaking = false,
   recentTranslations,
   speakSpanish,
   recordPractice,
@@ -217,17 +218,29 @@ Respond ONLY with raw JSON:
               <div className="flex items-center gap-1">
                 <button
                   type="button"
+                  disabled={isSpeaking}
                   onClick={() => speakSpanish(result.spanish_text)}
-                  className="press-scale min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center text-muted hover:text-accent hover:bg-subtle cursor-pointer transition-colors"
+                  className={`press-scale min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center transition-colors ${
+                    isSpeaking
+                      ? "opacity-50 cursor-not-allowed text-muted"
+                      : "text-muted hover:text-accent hover:bg-subtle cursor-pointer"
+                  }`}
                   aria-label={`Listen in ${langName}`}
+                  title={isSpeaking ? "Audio playing…" : `Listen in ${langName}`}
                 >
                   <Icon name="volume" className="w-4 h-4" />
                 </button>
                 <button
                   type="button"
+                  disabled={isSpeaking}
                   onClick={() => speakSpanish(result.spanish_text, { slow: true })}
-                  className="press-scale px-2.5 py-1 rounded-full text-overline font-medium text-muted hover:text-primary hover:bg-subtle cursor-pointer transition-colors"
+                  className={`press-scale px-2.5 py-1 rounded-full text-overline font-medium transition-colors ${
+                    isSpeaking
+                      ? "opacity-50 cursor-not-allowed text-muted"
+                      : "text-muted hover:text-primary hover:bg-subtle cursor-pointer"
+                  }`}
                   aria-label="Listen at 0.7x slower speed"
+                  title={isSpeaking ? "Audio playing…" : "Listen at 0.7x speed"}
                 >
                   0.7×
                 </button>
@@ -287,9 +300,15 @@ Respond ONLY with raw JSON:
 
                     <button
                       type="button"
+                      disabled={isSpeaking}
                       onClick={() => speakSpanish(tok.spanish)}
-                      className="press-scale min-w-[36px] min-h-[36px] rounded-full flex items-center justify-center text-muted hover:text-accent hover:bg-surface cursor-pointer shrink-0 transition-colors"
+                      className={`press-scale min-w-[36px] min-h-[36px] rounded-full flex items-center justify-center shrink-0 transition-colors ${
+                        isSpeaking
+                          ? "opacity-50 cursor-not-allowed text-muted"
+                          : "text-muted hover:text-accent hover:bg-surface cursor-pointer"
+                      }`}
                       aria-label={`Pronounce ${tok.spanish}`}
+                      title={isSpeaking ? "Audio playing…" : `Pronounce ${tok.spanish}`}
                     >
                       <Icon name="volume" className="w-3.5 h-3.5" />
                     </button>
