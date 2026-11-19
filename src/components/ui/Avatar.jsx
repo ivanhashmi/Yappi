@@ -435,37 +435,11 @@ const NAME_TO_ROLE = {
   amélie: "tutor",
 };
 
-export const ROLE_TO_EMOJI = {
-  barista: "☕",
-  waiter: "🥘",
-  shopkeeper: "🍎",
-  taxi: "🚕",
-  roommate: "🍕",
-  "football-star": "⚽",
-  "sports-fan": "🏟️",
-  "movie-buff": "🎬",
-  musician: "🎸",
-  girlfriend: "💖",
-  "best-friend": "🤝",
-  crush: "✨",
-  "party-stranger": "🎉",
-  interviewer: "👔",
-  colleague: "💻",
-  businessman: "🚀",
-  professor: "🎓",
-  guide: "🗺️",
-  hotel: "🏨",
-  traveller: "🎒",
-  tourist: "📸",
-  tutor: "👩‍🏫",
-  user: "👤",
-};
-
 /**
- * Character & Persona Avatar
- * - Displays expressive emoji avatars like before (with vibrant gradients or pastel tints)
- * - Supports squircle (iOS / macOS 2xl rounded tile) with active online status dot
- * - Full backward compatibility with custom icons or initials fallback
+ * Modern Subtle Color-Coded Avatar
+ * - Distinct subtle pastel tint per persona role with matching border and icon
+ * - Crisp vector role icons (Coffee, Taxi, Football, Guitar, etc.) replacing plain monochrome letter circles
+ * - Full backward compatibility with name, character object, custom icon, or initials
  */
 export default function Avatar({
   character = null,
@@ -475,26 +449,17 @@ export default function Avatar({
   category = "",
   icon = null,
   size = "md", // "xs" (24px), "sm" (32px), "md" (44px), "lg" (56px), "xl" (64px)
-  variant = "emoji", // "emoji" | "role-icon" | "initials"
-  shape = "squircle", // "squircle" | "circle"
-  showStatus = true,
+  variant = "role-icon", // "role-icon" | "emoji" | "initials"
   className = "",
   ariaLabel,
 }) {
   const resolvedName = character?.name || name || "";
+  const resolvedAvatar = character?.avatar || avatar || null;
   const resolvedCategory = character?.category || category || "";
-  const resolvedGradient = character?.gradient || null;
 
   // Derive role key
   const normalizedName = resolvedName.trim().toLowerCase();
   const rawRoleKey = (character?.id || role || NAME_TO_ROLE[normalizedName] || "").toLowerCase();
-
-  // Resolve emoji avatar (prefers character's own emoji or fallback lookup)
-  const resolvedAvatar =
-    character?.avatar ||
-    avatar ||
-    ROLE_TO_EMOJI[rawRoleKey] ||
-    (rawRoleKey === "tutor" ? "👩‍🏫" : null);
 
   // Find theme
   const theme =
@@ -509,12 +474,12 @@ export default function Avatar({
       : { bg: "bg-subtle", border: "border-hairline", text: "text-primary" });
 
   const sizeClasses = {
-    xs: `w-6 h-6 ${shape === "circle" ? "rounded-full" : "rounded-lg"}`,
-    sm: `w-8 h-8 ${shape === "circle" ? "rounded-full" : "rounded-xl"}`,
-    md: `w-11 h-11 ${shape === "circle" ? "rounded-full" : "rounded-2xl"}`,
-    lg: `w-14 h-14 ${shape === "circle" ? "rounded-full" : "rounded-2xl"}`,
-    xl: `w-16 h-16 ${shape === "circle" ? "rounded-full" : "rounded-3xl"}`,
-  }[size] || `w-11 h-11 ${shape === "circle" ? "rounded-full" : "rounded-2xl"}`;
+    xs: "w-6 h-6",
+    sm: "w-8 h-8",
+    md: "w-11 h-11",
+    lg: "w-14 h-14",
+    xl: "w-16 h-16",
+  }[size] || "w-11 h-11";
 
   const iconSizes = {
     xs: "w-3 h-3",
@@ -525,12 +490,12 @@ export default function Avatar({
   }[size] || "w-5.5 h-5.5";
 
   const emojiSizes = {
-    xs: "text-xs",
-    sm: "text-base",
-    md: "text-2xl",
-    lg: "text-3xl",
-    xl: "text-4xl",
-  }[size] || "text-2xl";
+    xs: "text-[11px]",
+    sm: "text-sm",
+    md: "text-xl",
+    lg: "text-2xl",
+    xl: "text-3xl",
+  }[size] || "text-xl";
 
   const fontSizes = {
     xs: "text-[10px] font-semibold",
@@ -539,14 +504,6 @@ export default function Avatar({
     lg: "text-title font-semibold",
     xl: "text-headline font-semibold",
   }[size] || "text-body font-semibold";
-
-  const statusDotSizes = {
-    xs: "w-2 h-2 -bottom-0.5 -right-0.5 border",
-    sm: "w-2.5 h-2.5 -bottom-0.5 -right-0.5 border-2",
-    md: "w-3 h-3 -bottom-0.5 -right-0.5 border-2",
-    lg: "w-3.5 h-3.5 -bottom-0.5 -right-0.5 border-2",
-    xl: "w-4 h-4 -bottom-0.5 -right-0.5 border-2",
-  }[size] || "w-3 h-3 -bottom-0.5 -right-0.5 border-2";
 
   const initials = resolvedName
     ? resolvedName
@@ -564,36 +521,22 @@ export default function Avatar({
   let content = null;
   if (icon) {
     content = <span className="opacity-95">{icon}</span>;
+  } else if (variant === "emoji" && resolvedAvatar) {
+    content = <span className={`select-none leading-none ${emojiSizes}`}>{resolvedAvatar}</span>;
+  } else if (RoleIconComponent && variant !== "initials") {
+    content = <RoleIconComponent className={iconSizes} />;
   } else if (resolvedAvatar && variant !== "initials") {
     content = <span className={`select-none leading-none ${emojiSizes}`}>{resolvedAvatar}</span>;
-  } else if (RoleIconComponent && variant === "role-icon") {
-    content = <RoleIconComponent className={iconSizes} />;
   } else {
     content = <span className={fontSizes}>{initials}</span>;
   }
 
-  // Display green active status dot for characters and persona avatars
-  const isCharacterPersona = Boolean(character || (rawRoleKey && rawRoleKey !== "user"));
-  const shouldRenderStatus = showStatus && isCharacterPersona;
-
-  // Background styling: vibrant gradient for characters with gradient like before,
-  // or refined subtle tint for other entities
-  const backgroundStyle = resolvedGradient
-    ? `bg-gradient-to-br ${resolvedGradient} shadow-sm text-white border-0`
-    : `${theme.bg} ${theme.border} ${theme.text} border`;
-
   return (
     <div
       aria-label={ariaLabel || resolvedName}
-      className={`relative flex items-center justify-center shrink-0 select-none transition-transform duration-fast ${backgroundStyle} ${sizeClasses} ${className}`}
+      className={`rounded-full border flex items-center justify-center shrink-0 select-none transition-colors duration-fast ${theme.bg} ${theme.border} ${theme.text} ${sizeClasses} ${className}`}
     >
       {content}
-      {shouldRenderStatus && (
-        <span
-          className={`absolute rounded-full bg-status-success border-surface shadow-xs ${statusDotSizes}`}
-          aria-hidden="true"
-        />
-      )}
     </div>
   );
 }
